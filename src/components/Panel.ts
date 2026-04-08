@@ -844,18 +844,6 @@ export class Panel {
       lockedChildren.push(featureList);
     }
 
-    const ctaBtn = h('button', { type: 'button', className: 'panel-locked-cta' }, 'Upgrade to Pro');
-    if (isDesktopRuntime()) {
-      ctaBtn.addEventListener('click', () => void invokeTauri<void>('open_url', { url: 'https://worldmonitor.app/pro' }).catch(() => window.open('https://worldmonitor.app/pro', '_blank')));
-    } else {
-      ctaBtn.addEventListener('click', () => {
-        import('@/services/checkout').then(m => import('@/config/products').then(p => m.startCheckout(p.DEFAULT_UPGRADE_PRODUCT))).catch(() => {
-          window.open('https://worldmonitor.app/pro', '_blank');
-        });
-      });
-    }
-    lockedChildren.push(ctaBtn);
-
     replaceChildren(this.content, h('div', { className: 'panel-locked-state' }, ...lockedChildren));
   }
 
@@ -877,8 +865,8 @@ export class Panel {
       },
       [PanelGateReason.FREE_TIER]: {
         icon: upgradeSvg,
-        desc: t('premium.upgradeDesc'),
-        cta: t('premium.upgradeToPro'),
+        desc: t('common.unavailable'),
+        cta: '',
       },
     };
 
@@ -890,10 +878,14 @@ export class Panel {
 
     const descEl = h('div', { className: 'panel-locked-desc' }, entry.desc);
 
-    const ctaBtn = h('button', { type: 'button', className: 'panel-locked-cta' }, entry.cta);
-    ctaBtn.addEventListener('click', onAction);
+    const children: (HTMLElement | string)[] = [iconEl, descEl];
+    if (reason === PanelGateReason.ANONYMOUS) {
+      const ctaBtn = h('button', { type: 'button', className: 'panel-locked-cta' }, entry.cta);
+      ctaBtn.addEventListener('click', onAction);
+      children.push(ctaBtn);
+    }
 
-    replaceChildren(this.content, h('div', { className: 'panel-locked-state' }, iconEl, descEl, ctaBtn));
+    replaceChildren(this.content, h('div', { className: 'panel-locked-state' }, ...children));
   }
 
   public unlockPanel(): void {

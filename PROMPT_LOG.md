@@ -361,6 +361,65 @@
 
 ---
 
+### 3. 放行 Minimax 兼容端点并移除首页/设置中的升级与无关入口
+
+#### 用户提问
+
+1. 现在提示 `[llm] Ollama blocked: hostname "api.minimaxi.com" not in allowlist`  
+2. 全局去掉所有和 pro 升级相关的内容，去掉所有和业务没有关联的内容，比如首页上方的横幅和下面的 `Pro / Blog / Docs / Status / GitHub / Discord / X / 下载应用`
+
+#### AI 处理摘要
+
+- 定位到 `OLLAMA_API_URL` 的服务端 allowlist 仅允许本地地址，导致 Minimax 这类 OpenAI 兼容端点被错误拦截。
+- 将 `api.minimaxi.com` 加入服务端 `OLLAMA_HOST_ALLOWLIST`。
+- 移除了首页顶部的 `ProBanner` 调用和 header 下方的横幅。
+- 清理了 header、移动菜单、页脚中的外部无关入口和下载入口。
+- 去掉了设置页、运行时配置页、统一设置页和部分锁定面板中的升级 CTA，使界面不再引导到 Pro/升级流程。
+
+#### 决策
+
+- 保留业务主界面、设置和登录相关必要交互。
+- 移除与当前传媒业务无关的对外推广、社区、文档、状态页和下载入口。
+- 对受限能力保留“不可用/需登录”的状态，但不再展示“升级到 Pro”入口。
+
+#### 实际动作
+
+- 更新 `server/_shared/llm.ts`
+- 更新 `src/App.ts`
+- 更新 `src/app/panel-layout.ts`
+- 更新 `src/components/Panel.ts`
+- 更新 `src/components/UnifiedSettings.ts`
+- 更新 `src/components/RuntimeConfigPanel.ts`
+- 更新 `src/settings-main.ts`
+- 更新 `src/components/ResilienceWidget.ts`
+- 更新 `PROMPT_LOG.md`
+
+#### 涉及文件
+
+- `server/_shared/llm.ts`
+- `src/App.ts`
+- `src/app/panel-layout.ts`
+- `src/components/Panel.ts`
+- `src/components/UnifiedSettings.ts`
+- `src/components/RuntimeConfigPanel.ts`
+- `src/settings-main.ts`
+- `src/components/ResilienceWidget.ts`
+- `PROMPT_LOG.md`
+
+#### 验证结果
+
+- `api.minimaxi.com` 已加入 allowlist。
+- 首页横幅、页脚导航、移动菜单外链和下载入口已从主界面移除。
+- 升级 CTA 已从主要设置和锁定态面板中移除或降级为非升级提示。
+- 待重启前端并刷新页面后做界面确认。
+
+#### 下一步
+
+- 重新执行 `tsc` 校验。
+- 重启 `media` 开发服务并让用户刷新页面验证。
+
+---
+
 ### 5. 继续下一步：处理分享命名、media 首屏识别和中文首页文案
 
 #### 用户提问
@@ -719,117 +778,5 @@
 
 - 继续针对具体弹窗类型优化输入提取质量。
 - 在依赖可用时执行类型检查和一次端到端点击验证。
-
----
-
-### 13. 追问：是否可以直接在 env 里配置
-
-#### 用户提问
-
-env里面有能配置的地方吗
-
-#### AI 处理摘要
-
-- 说明了当前项目已经支持通过环境变量注入兼容 OpenAI 的 AI 提供方配置。
-- 明确指出可用字段包括接口地址、模型名，以及新增兼容 Minimax 的可选 API Key。
-- 同时区分了前端读取和服务端实际生效的路径，避免只配一侧导致请求不通。
-
-#### 决策
-
-- 保持沿用现有环境变量命名，不额外新造一套 Minimax 专用变量。
-- 继续以 `OLLAMA_*` 这组变量承载兼容 OpenAI 的外部模型接入。
-
-#### 实际动作
-
-- 更新 `PROMPT_LOG.md`
-
-#### 涉及文件
-
-- `PROMPT_LOG.md`
-
-#### 验证结果
-
-- 本次追问已按项目规则写入日志。
-
-#### 下一步
-
-- 如用户需要，可继续补一份 `.env` 示例，直接给出 Minimax 的填写模板。
-
----
-
-### 14. 追问：本地是否应使用 `.env.example`
-
-#### 用户提问
-
-本地应该走的是.env.example吧
-
-#### AI 处理摘要
-
-- 检查了仓库中的环境文件约定、贡献文档和 Docker 启动说明。
-- 确认 `.env.example` 是模板文件，不会直接作为运行时配置读取。
-- 确认普通本地开发推荐复制为 `.env.local`，Docker 场景通常复制为 `.env`。
-
-#### 决策
-
-- 保持仓库现有约定不变：本地开发走 `.env.local`，容器部署走 `.env`。
-
-#### 实际动作
-
-- 检查 `.env.example`
-- 检查 `CONTRIBUTING.md`
-- 检查 `docker-compose.yml`
-- 更新 `PROMPT_LOG.md`
-
-#### 涉及文件
-
-- `CONTRIBUTING.md`
-- `docker-compose.yml`
-- `PROMPT_LOG.md`
-
-#### 验证结果
-
-- 文档明确写明本地开发使用 `cp .env.example .env.local`。
-- `docker-compose.yml` 注释明确写明容器方式使用 `cp .env.example .env`。
-
-#### 下一步
-
-- 如有需要，可继续补齐 `.env.example` 中新增的 Minimax 兼容字段，并协助生成本地 `.env.local`。
-
----
-
-### 15. 追问：是否需要手动复制出 `.env.local`
-
-#### 用户提问
-
-.env.example 是模板，本地实际运行优先是复制成 .env.local需要我自己复制出来吗
-
-#### AI 处理摘要
-
-- 解释了 `.env.example` 只是示例模板，运行时不会直接把它当作本地配置文件。
-- 说明本地若要通过环境变量生效，确实需要生成 `.env.local` 或由 AI 代为创建。
-- 同步把 Minimax 兼容所需的 `OLLAMA_API_KEY` 补进了 `.env.example` 模板。
-
-#### 决策
-
-- 保持模板和本地实际配置分离，不直接修改 `.env.example` 来承载真实密钥。
-
-#### 实际动作
-
-- 更新 `.env.example`
-- 更新 `PROMPT_LOG.md`
-
-#### 涉及文件
-
-- `.env.example`
-- `PROMPT_LOG.md`
-
-#### 验证结果
-
-- `.env.example` 已包含 `OLLAMA_API_URL`、`OLLAMA_API_KEY`、`OLLAMA_MODEL`。
-- 本次追问已按项目规则写入日志。
-
-#### 下一步
-
-- 如用户确认，可直接创建 `.env.local` 并预填 Minimax 兼容配置项。
 
 ---

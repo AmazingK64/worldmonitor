@@ -1,10 +1,7 @@
-import { DEFAULT_UPGRADE_PRODUCT } from '@/config/products';
 import { type AuthSession, getAuthState, subscribeAuthState } from '@/services/auth-state';
 import { openSignIn } from '@/services/clerk';
 import { PanelGateReason, getPanelGateReason } from '@/services/panel-gating';
 import { getResilienceScore, type ResilienceDomain, type ResilienceScoreResponse } from '@/services/resilience';
-import { isDesktopRuntime } from '@/services/runtime';
-import { invokeTauri } from '@/services/tauri-bridge';
 import { h, replaceChildren } from '@/utils/dom-utils';
 import {
   RESILIENCE_VISUAL_LEVEL_COLORS,
@@ -195,30 +192,29 @@ export class ResilienceWidget {
   private renderLocked(gateReason: PanelGateReason): HTMLElement {
     const description = gateReason === PanelGateReason.ANONYMOUS
       ? 'Sign in to unlock premium resilience scores.'
-      : 'Upgrade to Pro to unlock resilience scores.';
-    const cta = gateReason === PanelGateReason.ANONYMOUS ? 'Sign In' : 'Upgrade to Pro';
+      : 'Resilience scores are unavailable in the current build.';
+    const cta = gateReason === PanelGateReason.ANONYMOUS ? 'Sign In' : '';
 
     const preview = this.renderScoreCard(LOCKED_PREVIEW, true);
     preview.classList.add('resilience-widget__preview');
 
-    const button = h('button', {
-      type: 'button',
-      className: 'panel-locked-cta resilience-widget__cta',
-      onclick: () => {
-        if (gateReason === PanelGateReason.ANONYMOUS) {
-          openSignIn();
-          return;
-        }
-        this.openUpgradeFlow();
-      },
-    }, cta) as HTMLButtonElement;
+    const children: HTMLElement[] = [
+      preview,
+      h('div', { className: 'panel-locked-desc resilience-widget__gate-desc' }, description),
+    ];
+    if (gateReason === PanelGateReason.ANONYMOUS) {
+      const button = h('button', {
+        type: 'button',
+        className: 'panel-locked-cta resilience-widget__cta',
+        onclick: () => openSignIn(),
+      }, cta) as HTMLButtonElement;
+      children.push(button);
+    }
 
     return h(
       'div',
       { className: 'cdp-card-body resilience-widget__locked' },
-      preview,
-      h('div', { className: 'panel-locked-desc resilience-widget__gate-desc' }, description),
-      button,
+      ...children,
     );
   }
 
@@ -343,17 +339,4 @@ export class ResilienceWidget {
     return h('div', { className: 'cdp-empty' }, text);
   }
 
-  private openUpgradeFlow(): void {
-    if (isDesktopRuntime()) {
-      void invokeTauri<void>('open_url', { url: 'https://worldmonitor.app/pro' })
-        .catch(() => window.open('https://worldmonitor.app/pro', '_blank'));
-      return;
-    }
-
-    import('@/services/checkout')
-      .then((module) => module.startCheckout(DEFAULT_UPGRADE_PRODUCT))
-      .catch(() => {
-        window.open('https://worldmonitor.app/pro', '_blank');
-      });
-  }
 }

@@ -17,6 +17,7 @@ export interface ProviderCredentialOverrides {
 
 const OLLAMA_HOST_ALLOWLIST = new Set([
   'localhost', '127.0.0.1', '::1', '[::1]', 'host.docker.internal',
+  'api.minimaxi.com',
 ]);
 
 function isLocalDeployment(): boolean {
