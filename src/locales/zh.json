@@ -42,7 +42,7 @@
       "conflictEvents": "冲突事件",
       "activeStrikes": "活跃罢工",
       "aviationDisruptions": "机场中断",
-      "gpsJammingZones": "GPS Jamming Zones"
+      "gpsJammingZones": "GPS 干扰区域"
     },
     "timeAgo": {
       "m": "{{count}}分钟前",
@@ -169,7 +169,7 @@
     "sourceRegionTopical": "专题",
     "sourceRegionIntel": "情报",
     "sourceRegionTechNews": "科技新闻",
-    "sourceRegionAiMl": "AI与ML",
+    "sourceRegionAiMl": "人工智能与机器学习",
     "sourceRegionStartupsVc": "创业与风投",
     "sourceRegionRegionalTech": "区域生态",
     "sourceRegionDeveloper": "开发者",
@@ -215,8 +215,8 @@
     "techMap": "全球科技",
     "techHubs": "热门科技中心",
     "status": "系统状态",
-    "insights": "AI洞察",
-    "strategicPosture": "AI战略态势",
+    "insights": "AI 洞察",
+    "strategicPosture": "AI 战略态势",
     "cii": "国家不稳定性",
     "strategicRisk": "战略风险概览",
     "intel": "情报动态",
@@ -243,7 +243,7 @@
     "mediaStoryline": "选题指挥板",
     "mediaBusinessRadar": "传媒经营雷达",
     "heatmap": "板块热力图",
-    "ai": "AI/ML",
+    "ai": "人工智能 / 机器学习",
     "layoffs": "裁员追踪",
     "monitors": "我的监控",
     "satelliteFires": "火灾",
@@ -257,8 +257,8 @@
     "climate": "气候异常",
     "populationExposure": "人口暴露",
     "securityAdvisories": "安全警告",
-    "orefSirens": "Israel Sirens",
-    "telegramIntel": "Telegram 情报",
+    "orefSirens": "以色列警报",
+    "telegramIntel": "Telegram 监测",
     "startups": "创业公司与风投",
     "vcblogs": "风投洞察与文章",
     "regionalStartups": "全球创业新闻",
@@ -273,20 +273,20 @@
     "github": "GitHub趋势",
     "ipo": "IPO与SPAC",
     "funding": "融资与风投",
-    "producthunt": "Product Hunt",
+    "producthunt": "产品热榜",
     "events": "科技活动",
     "serviceStatus": "服务状态",
     "techReadiness": "科技就绪指数",
     "gccInvestments": "GCC投资",
     "geoHubs": "地缘政治枢纽",
-    "liveYouTube": "实时摄像头",
-    "pinnedWebcams": "Pinned Webcams",
+    "liveYouTube": "实时视频流",
+    "pinnedWebcams": "固定摄像头",
     "gulfEconomies": "海湾经济",
     "gulfIndices": "海湾指数",
     "gulfCurrencies": "海湾货币",
     "gulfOil": "海湾石油",
-    "bigmac": "Real Big Mac Index",
-    "fearGreed": "Fear & Greed"
+    "bigmac": "巨无霸指数",
+    "fearGreed": "贪婪与恐惧"
   },
   "commands": {
     "prefixes": {
@@ -316,15 +316,15 @@
       "map": "输入国家名称以在地图上飞往该位置",
       "panel": "输入面板名称以滚动到该面板",
       "brief": "输入国家名称以获取情报简报",
-      "layers": "输入 \"military\" 或 \"finance\" 以应用图层预设",
-      "time": "输入 \"1h\"、\"24h\" 或 \"7d\" 按时间筛选",
-      "settings": "输入 \"dark mode\"、\"settings\" 或 \"fullscreen\"",
-      "mapExample": "iran",
-      "panelExample": "news",
-      "briefExample": "brief china",
-      "layersExample": "military layers",
+      "layers": "输入“军事”或“金融”以应用图层预设",
+      "time": "输入“1h”“24h”或“7d”按时间筛选",
+      "settings": "输入“深色模式”“设置”或“全屏”",
+      "mapExample": "伊朗",
+      "panelExample": "新闻",
+      "briefExample": "简报 中国",
+      "layersExample": "军事 图层",
       "timeExample": "24h",
-      "settingsExample": "dark mode"
+      "settingsExample": "深色模式"
     },
     "keywords": {
       "military": "军事",
@@ -501,7 +501,7 @@
         "some": "部分功能需要API密钥"
       },
       "openSettings": "打开设置",
-      "skipSetup": "跳过设置 — 一个World Monitor许可证即可解锁全部功能。加入候补名单抢先体验。",
+      "skipSetup": "跳过设置 — 一个许可证即可解锁全部功能。加入候补名单抢先体验。",
       "summary": {
         "desktop": "桌面模式",
         "web": "网页模式（只读，服务器管理凭证）",
@@ -546,9 +546,9 @@
       "sidecarUnreachable": "Sidecar不可达。",
       "logCleared": "日志已清除。",
       "worldMonitor": {
-        "tabLabel": "World Monitor",
+        "tabLabel": "平台许可证",
         "heroTitle": "一个密钥，万事俱备。",
-        "heroDescription": "一个World Monitor许可证即可替代所有需要自行配置的API密钥和LLM提供商。AI摘要、实时情报、市场数据、冲突追踪、火灾检测、卫星图像 — 全部就绪，全部托管，零配置。",
+        "heroDescription": "一个许可证即可替代手动配置的 API 密钥和 LLM 提供商。AI 摘要、实时监测、市场数据、事件追踪、火灾检测、卫星图像，全部就绪，全部托管，零配置。",
         "apiKey": {
           "title": "许可证密钥",
           "placeholder": "wm_xxxxxxxxxxxxxxxxxxxxxxxx",
@@ -559,7 +559,7 @@
         "dividerOr": "或",
         "register": {
           "title": "预留您的名额",
-          "description": "World Monitor许可证即将上线。立即注册成为首批用户 — 早期会员享有优先访问和创始会员价格。",
+          "description": "平台许可证即将上线。立即注册成为首批用户，早期会员享有优先访问和创始会员价格。",
           "emailPlaceholder": "your@email.com",
           "submitBtn": "加入候补名单",
           "submitting": "提交中...",
@@ -633,7 +633,7 @@
         "conflictEvents": "冲突事件",
         "activeStrikes": "活跃罢工",
         "aviationDisruptions": "机场中断",
-        "gpsJammingZones": "GPS Jamming Zones"
+        "gpsJammingZones": "GPS 干扰区域"
       },
       "timeAgo": {
         "m": "{{count}}分钟前",
@@ -1228,7 +1228,7 @@
       "aiFlowStatusBrowserOnly": "仅浏览器模型",
       "aiFlowStatusDisabled": "没有启用的AI提供商",
       "insightsDisabledTitle": "AI分析已禁用",
-      "insightsDisabledHint": "Enable providers via the settings gear in the map header",
+      "insightsDisabledHint": "请通过地图头部的设置按钮启用 AI 提供商",
       "sectionPanels": "面板",
       "badgeAnimLabel": "徽章动画",
       "badgeAnimDesc": "在面板标题中显示更新徽章动画",
@@ -1236,7 +1236,7 @@
       "headlineMemoryLabel": "标题记忆",
       "headlineMemoryDesc": "记住已阅标题以突出显示新内容",
       "streamAlwaysOnLabel": "保持实时流持续播放",
-      "streamAlwaysOnDesc": "防止 Live Cams 和 Live News 在你空闲时自动暂停。建议用于副屏 / 墙面看板场景。关闭（Eco）可节省 CPU/带宽。"
+      "streamAlwaysOnDesc": "防止实时摄像头和实时新闻在你空闲时自动暂停。建议用于副屏或墙面看板场景。关闭后可节省 CPU 和带宽。"
     },
     "settings": {
       "dataManagementLabel": "数据管理",
@@ -1293,28 +1293,28 @@
         "deEscalating": "缓和中",
         "stable": "稳定"
       },
-      "insufficientData": "Insufficient Data",
-      "unableToAssess": "Unable to assess risk level.",
-      "enableDataSources": "Enable data sources to begin monitoring.",
-      "requiredDataSources": "Required Data Sources",
-      "optionalSources": "Optional Sources",
-      "enableCoreFeeds": "Enable Core Feeds",
-      "waitingForData": "Waiting for data...",
-      "refresh": "Refresh",
-      "learningMode": "Learning Mode - {{minutes}}m until reliable",
-      "noData": "no data",
-      "enable": "Enable",
-      "convergenceMetric": "Convergence",
-      "ciiDeviation": "CII Deviation",
-      "infraEvents": "Infra Events",
-      "highAlerts": "High Alerts",
-      "topRisks": "Top Risks",
-      "recentAlerts": "Recent Alerts ({{count}})",
-      "updated": "Updated: {{time}}",
+      "insufficientData": "数据不足",
+      "unableToAssess": "暂时无法判断风险等级。",
+      "enableDataSources": "请先启用数据源以开始监测。",
+      "requiredDataSources": "必需数据源",
+      "optionalSources": "可选数据源",
+      "enableCoreFeeds": "启用核心数据源",
+      "waitingForData": "等待数据中...",
+      "refresh": "刷新",
+      "learningMode": "学习模式中，还需 {{minutes}} 分钟才会更稳定",
+      "noData": "无数据",
+      "enable": "启用",
+      "convergenceMetric": "收敛度",
+      "ciiDeviation": "CII 偏离度",
+      "infraEvents": "基础设施事件",
+      "highAlerts": "高优先级警报",
+      "topRisks": "主要风险",
+      "recentAlerts": "近期警报（{{count}}）",
+      "updated": "更新时间：{{time}}",
       "time": {
-        "justNow": "just now",
-        "minutesAgo": "{{count}}m ago",
-        "hoursAgo": "{{count}}h ago"
+        "justNow": "刚刚",
+        "minutesAgo": "{{count}} 分钟前",
+        "hoursAgo": "{{count}} 小时前"
       },
       "infoTooltip": "<strong>方法论</strong>综合评分（0-100）混合：<ul><li>50% 国家不稳定性（前5名加权）</li><li>30% 地理趋同区域</li><li>20% 基础设施事故</li></ul>每5分钟自动刷新。"
     },
@@ -1323,13 +1323,13 @@
       "noEvents": "无可显示的活动",
       "showOnMap": "在地图上显示",
       "moreInfo": "更多信息",
-      "retry": "Retry",
-      "upcoming": "Upcoming",
-      "conferences": "Conferences",
-      "earnings": "Earnings",
-      "all": "All",
-      "conferencesCount": "{{count}} conferences",
-      "onMap": "{{count}} on map",
+      "retry": "重试",
+      "upcoming": "即将开始",
+      "conferences": "会议活动",
+      "earnings": "财报日程",
+      "all": "全部",
+      "conferencesCount": "{{count}} 场会议",
+      "onMap": "{{count}} 个已标注到地图",
       "techmemeEvents": "Techmeme Events ↗",
       "today": "TODAY",
       "soon": "SOON",
@@ -1341,12 +1341,12 @@
       "rdSpending": "研发支出",
       "fetchingData": "Fetching World Bank Data",
       "internetUsersIndicator": "Internet Users",
-      "mobileSubscriptionsIndicator": "Mobile Subscriptions",
-      "broadbandAccess": "Broadband Access",
-      "rdExpenditure": "R&D Expenditure",
-      "analyzingCountries": "Analyzing 200+ countries...",
-      "source": "Source: World Bank",
-      "updated": "Updated: {{date}}",
+      "mobileSubscriptionsIndicator": "移动订阅数",
+      "broadbandAccess": "宽带接入",
+      "rdExpenditure": "研发支出",
+      "analyzingCountries": "正在分析 200 多个国家...",
+      "source": "来源：世界银行",
+      "updated": "更新时间：{{date}}",
       "infoTooltip": "<strong>全球科技就绪度</strong><br>基于世界银行数据的综合评分（0-100）：<br><br><strong>显示指标：</strong><br>🌐 互联网用户（占人口百分比）<br>📱 移动订阅（每100人）<br>🔬 研发支出（占GDP百分比）<br><br><strong>权重：</strong>研发（35%）、互联网（30%）、宽带（20%）、移动（15%）<br><br><em>— = 无近期可用数据</em><br><em>来源：世界银行开放数据（2019-2024）</em>"
     },
     "populationExposure": {
@@ -1385,11 +1385,11 @@
       "activeSirens": "{{count}} active siren(s)",
       "area": "Area",
       "time": "Time",
-      "justNow": "just now",
-      "historyCount": "{{count}} alerts in last 24h",
+      "justNow": "刚刚",
+      "historyCount": "过去 24 小时内 {{count}} 次警报",
       "historySummary": "24小时内{{count}}次警报 — {{waves}}波次",
       "loadingHistory": "正在加载历史记录...",
-      "infoTooltip": "<strong>Israel Sirens</strong><br>Real-time rocket and missile siren alerts from Israel Home Front Command.<br><br>Data is polled every 10 seconds. A pulsing red indicator means active sirens are sounding."
+      "infoTooltip": "<strong>以色列警报</strong><br>来自以色列本土守备司令部的火箭弹与导弹警报。<br><br>数据每 10 秒轮询一次。红色脉冲指示器表示当前仍有警报正在响起。"
     },
     "satelliteFires": {
       "noData": "无可用火灾数据",
@@ -1656,47 +1656,47 @@
       "acceptanceChecks": "Acceptance checks: {{ready}}/{{total}} ready · key-backed features {{available}}/{{featureTotal}}",
       "nonParityFallbacks": "Non-parity fallbacks ({{count}})",
       "categories": {
-        "all": "All",
-        "cloud": "Cloud",
-        "dev": "Dev Tools",
-        "comm": "Comms",
-        "ai": "AI",
+        "all": "全部",
+        "cloud": "云服务",
+        "dev": "开发工具",
+        "comm": "通信",
+        "ai": "人工智能",
         "saas": "SaaS"
       },
       "infoTooltip": "<strong>服务状态</strong> 主要云平台、金融基础设施和关键互联网服务的实时运营状态。来源：官方状态页面（AWS、Azure、GCP、Cloudflare、交易所）。事故可能表明更大范围的中断事件。"
     },
     "verification": {
-      "title": "Information Verification Checklist",
-      "hint": "Based on Bellingcat's OSH Framework",
+      "title": "信息核验清单",
+      "hint": "基于 Bellingcat 的 OSH 核验框架",
       "verdicts": {
-        "verified": "VERIFIED",
-        "likely": "LIKELY AUTHENTIC",
-        "uncertain": "UNCERTAIN",
-        "unreliable": "UNRELIABLE"
+        "verified": "已验证",
+        "likely": "大概率真实",
+        "uncertain": "存疑",
+        "unreliable": "不可靠"
       },
-      "notesTitle": "Verification Notes",
-      "noNotes": "No notes added",
-      "addNotePlaceholder": "Add verification note...",
-      "add": "Add",
-      "resetChecklist": "Reset Checklist",
+      "notesTitle": "核验备注",
+      "noNotes": "暂无备注",
+      "addNotePlaceholder": "添加核验备注...",
+      "add": "添加",
+      "resetChecklist": "重置清单",
       "checks": {
-        "recency": "Recent timestamp confirmed",
-        "geolocation": "Location verified",
-        "source": "Primary source identified",
-        "crossref": "Cross-referenced with other sources",
-        "noAi": "No AI generation artifacts",
-        "noRecrop": "Not recycled/old footage",
-        "metadata": "Metadata verified",
-        "context": "Context established"
+        "recency": "已确认时间新近性",
+        "geolocation": "已核验地理位置",
+        "source": "已识别一手来源",
+        "crossref": "已与其他来源交叉验证",
+        "noAi": "未发现 AI 生成痕迹",
+        "noRecrop": "不是旧素材或重复裁切素材",
+        "metadata": "元数据已核验",
+        "context": "上下文已建立"
       }
     },
     "liveNews": {
-      "retry": "Retry",
-      "notLive": "{{name}} is not currently live",
+      "retry": "重试",
+      "notLive": "{{name}} 当前未在直播",
       "cannotEmbed": "{{name}} 无法在此播放 — 可能在您所在的地区受到限制（错误 {{code}}）",
       "botCheck": "YouTube要求登录才能播放{{name}}",
       "signInToYouTube": "登录YouTube",
-      "openOnYouTube": "Open on YouTube",
+      "openOnYouTube": "在 YouTube 打开",
       "manage": "管理频道",
       "addChannel": "添加频道",
       "remove": "删除",
@@ -1732,16 +1732,16 @@
       "hideMap": "隐藏地图"
     },
     "internetDisruptions": {
-      "infoTooltip": "<strong>Internet Disruptions</strong> Real-time internet outages, DDoS attacks, and traffic anomalies from global network monitoring:<ul><li><strong>Outages</strong>: BGP-detected connectivity failures by country</li><li><strong>DDoS</strong>: Volumetric attack reports by protocol and vector</li><li><strong>Anomalies</strong>: Unusual traffic patterns from Cloudflare Radar</li></ul>"
+      "infoTooltip": "<strong>互联网中断</strong> 来自全球网络监测的实时互联网故障、DDoS 攻击和流量异常：<ul><li><strong>中断</strong>：按国家统计的 BGP 连通性故障</li><li><strong>DDoS</strong>：按协议和攻击向量分类的流量攻击报告</li><li><strong>异常</strong>：来自 Cloudflare Radar 的异常流量模式</li></ul>"
     },
     "commodities": {
-      "infoTooltip": "<strong>Commodities</strong> Tradeable non-energy commodity tape focused on metals and materials. Energy prices live in Energy Complex; macro stress indicators live in Macro Stress."
+      "infoTooltip": "<strong>大宗商品</strong> 聚焦金属与材料的可交易非能源商品行情。能源价格请查看 Energy Complex，宏观压力指标请查看 Macro Stress。"
     },
     "crypto": {
-      "infoTooltip": "<strong>Crypto</strong> Live prices, 24h changes, and volume for major cryptocurrencies. Data sourced from CoinGecko."
+      "infoTooltip": "<strong>加密货币</strong> 展示主流加密资产的实时价格、24 小时涨跌幅和成交量。数据来源：CoinGecko。"
     },
     "gulfEconomies": {
-      "infoTooltip": "<strong>Gulf Economies</strong> Real-time Gulf stock indices, currency rates, and oil prices for GCC economies (Saudi Arabia, UAE, Kuwait, Qatar, Bahrain, Oman)."
+      "infoTooltip": "<strong>海湾经济体</strong> 展示 GCC 经济体（沙特、阿联酋、科威特、卡塔尔、巴林、阿曼）的实时股指、汇率和油价。"
     },
     "groceryBasket": {
       "infoTooltip": "<strong>Grocery Index</strong> Global grocery basket price comparison across 24 countries — tracks real-world consumer goods inflation beyond headline CPI."
@@ -1774,7 +1774,7 @@
       "infoTooltip": "<strong>航空情报</strong> 实时航空公司运营数据：航线暂停、空域关闭、承运商公告和紧急改航。来源：航空当局NOTAM和承运商通报。"
     },
     "chatAnalyst": {
-      "infoTooltip": "<strong>WM 分析师</strong> 具有地缘政治、市场、军事和经济领域实时上下文的AI分析师。由Claude驱动，注入WorldMonitor活跃数据源的实时数据。"
+      "infoTooltip": "<strong>WM 分析师</strong> 具备地缘政治、市场、军事和经济实时上下文的 AI 分析师。由 Claude 驱动，并接入平台当前活跃数据源。"
     },
     "cotPositioning": {
       "infoTooltip": "<strong>CFTC COT 持仓</strong> 交易者承诺报告：商品和金融期货中商业机构、大型投机者和小型交易者的净持仓。每周五发布。来源：CFTC。"
@@ -1804,7 +1804,7 @@
       "infoTooltip": "<strong>宏观指标</strong> 美国和欧元区关键宏观经济指标：CPI、失业率、GDP和央行利率。显示值含与前期的差值。来源：FRED（联邦储备经济数据）。"
     },
     "monitors": {
-      "infoTooltip": "<strong>关键词监控</strong> 添加任何词汇，实时追踪WorldMonitor所有来源中的新闻提及。匹配文章被收录时结果实时更新。"
+      "infoTooltip": "<strong>关键词监控</strong> 添加任意词汇，实时追踪平台全部来源中的新闻提及。匹配文章被收录时结果会同步更新。"
     },
     "renewable": {
       "infoTooltip": "<strong>可再生能源</strong> 全球可再生能源项目管道：太阳能、风能、水电和储能容量新增。按地区和技术类型追踪已宣布、在建和已投运项目。"
