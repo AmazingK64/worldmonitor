@@ -882,11 +882,65 @@ const COMMODITY_FEEDS: Record<string, Feed[]> = {
   ],
 };
 
+const MEDIA_FEEDS: Record<string, Feed[]> = {
+  politics: [
+    { name: 'BBC World', url: rss('https://feeds.bbci.co.uk/news/world/rss.xml') },
+    { name: 'Reuters World', url: rss('https://news.google.com/rss/search?q=site:reuters.com+world&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'AP News', url: rss('https://news.google.com/rss/search?q=site:apnews.com&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Guardian World', url: rss('https://www.theguardian.com/world/rss') },
+    { name: 'CNN World', url: rss('https://news.google.com/rss/search?q=site:cnn.com+world+news+when:1d&hl=en-US&gl=US&ceid=US:en') },
+  ],
+  'media-business': [
+    { name: 'Digiday', url: rss('https://digiday.com/feed/') },
+    { name: 'Adweek', url: rss('https://www.adweek.com/feed/') },
+    { name: 'Nieman Lab', url: rss('https://www.niemanlab.org/feed/') },
+    { name: 'Reuters Media', url: rss('https://news.google.com/rss/search?q=site:reuters.com+media+advertising+publishing+when:3d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Media Moves', url: rss('https://news.google.com/rss/search?q=(publishing+OR+newsroom+OR+media+company+OR+advertising)+deal+OR+layoffs+OR+strategy+when:3d&hl=en-US&gl=US&ceid=US:en') },
+  ],
+  'media-policy': [
+    { name: 'FCC News', url: rss('https://www.fcc.gov/news-events/headlines/rss.xml') },
+    { name: 'Ofcom News', url: rss('https://www.ofcom.org.uk/siteassets/resources/documents/news-centre/rss-news.xml') },
+    { name: 'Platform Regulation', url: rss('https://news.google.com/rss/search?q=(media+regulation+OR+platform+regulation+OR+broadcast+law+OR+press+freedom)+when:7d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Copyright & AI', url: rss('https://news.google.com/rss/search?q=(copyright+AND+AI+AND+publishers)+OR+(news+publishers+AI+licensing)+when:7d&hl=en-US&gl=US&ceid=US:en') },
+  ],
+  'media-platforms': [
+    { name: 'Social Platforms', url: rss('https://news.google.com/rss/search?q=(YouTube+OR+TikTok+OR+Instagram+OR+Meta+OR+X+platform)+creator+OR+media+OR+algorithm+when:3d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Streaming', url: rss('https://news.google.com/rss/search?q=(Netflix+OR+Disney+OR+streaming)+media+strategy+OR+subscribers+when:3d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Distribution Strategy', url: rss('https://news.google.com/rss/search?q=(audience+distribution+OR+publisher+traffic+OR+referral+traffic+OR+news+algorithm)+when:3d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Platform Policy', url: rss('https://news.google.com/rss/search?q=(content+moderation+OR+platform+policy+OR+news+visibility)+when:3d&hl=en-US&gl=US&ceid=US:en') },
+  ],
+  'media-culture': [
+    { name: 'Variety', url: rss('https://variety.com/feed/') },
+    { name: 'Hollywood Reporter', url: rss('https://www.hollywoodreporter.com/feed/') },
+    { name: 'Deadline', url: rss('https://deadline.com/feed/') },
+    { name: 'Entertainment Strategy', url: rss('https://news.google.com/rss/search?q=(film+industry+OR+tv+industry+OR+streaming+industry)+strategy+when:3d&hl=en-US&gl=US&ceid=US:en') },
+  ],
+  'media-tech': [
+    { name: 'TechCrunch', url: rss('https://techcrunch.com/feed/') },
+    { name: 'The Verge', url: rss('https://www.theverge.com/rss/index.xml') },
+    { name: 'AI in Media', url: rss('https://news.google.com/rss/search?q=(AI+in+newsroom+OR+AI+in+media+OR+publisher+AI+workflow)+when:7d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Media Tools', url: rss('https://news.google.com/rss/search?q=(journalism+tools+OR+publishing+platform+OR+CMS+for+media)+when:7d&hl=en-US&gl=US&ceid=US:en') },
+  ],
+  'media-audience': [
+    { name: 'Creator Economy', url: rss('https://news.google.com/rss/search?q=(creator+economy+OR+creator+business+OR+influencer+marketing)+when:3d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Audience Trends', url: rss('https://news.google.com/rss/search?q=(audience+trends+OR+reader+engagement+OR+subscriber+growth+OR+media+consumption)+when:3d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Newsletters & Podcasts', url: rss('https://news.google.com/rss/search?q=(newsletter+business+OR+podcast+industry+OR+audio+media)+when:7d&hl=en-US&gl=US&ceid=US:en') },
+  ],
+  'media-regions': [
+    { name: 'Asia Media', url: rss('https://news.google.com/rss/search?q=(Asia+media+industry+OR+Asian+publishers+OR+Asia+newsroom)+when:7d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Europe Media', url: rss('https://news.google.com/rss/search?q=(Europe+media+industry+OR+European+publishers+OR+Europe+newsroom)+when:7d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'US Media', url: rss('https://news.google.com/rss/search?q=(US+media+industry+OR+American+publishers+OR+newsroom+strategy)+when:7d&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'MENA Media', url: rss('https://news.google.com/rss/search?q=(MENA+media+industry+OR+Middle+East+publishers+OR+GCC+media)+when:7d&hl=en-US&gl=US&ceid=US:en') },
+  ],
+};
+
 // Variant-aware exports
 export const FEEDS = SITE_VARIANT === 'tech'
   ? TECH_FEEDS
   : SITE_VARIANT === 'finance'
     ? FINANCE_FEEDS
+    : SITE_VARIANT === 'media'
+      ? MEDIA_FEEDS
     : SITE_VARIANT === 'happy'
       ? HAPPY_FEEDS
       : SITE_VARIANT === 'commodity'
@@ -924,6 +978,11 @@ export const SOURCE_REGION_MAP: Record<string, { labelKey: string; feedKeys: str
   dealsCorpFin: { labelKey: 'header.sourceRegionDeals', feedKeys: ['institutional', 'derivatives'] },
   finRegulation: { labelKey: 'header.sourceRegionFinRegulation', feedKeys: ['regulation'] },
   gulfMena: { labelKey: 'header.sourceRegionGulfMena', feedKeys: ['gccNews'] },
+
+  // Media variant regions
+  mediaTopStories: { labelKey: 'header.sourceRegionWorldwide', feedKeys: ['politics', 'media-regions'] },
+  mediaIndustry: { labelKey: 'header.sourceRegionTopical', feedKeys: ['media-business', 'media-policy', 'media-platforms'] },
+  mediaCreation: { labelKey: 'header.sourceRegionTechMedia', feedKeys: ['media-tech', 'media-audience', 'media-culture'] },
 };
 
 export const INTEL_SOURCES: Feed[] = [

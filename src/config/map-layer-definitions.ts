@@ -3,7 +3,7 @@ import type { MapLayers } from '@/types';
 import { isDesktopRuntime } from '@/services/runtime';
 
 export type MapRenderer = 'flat' | 'globe';
-export type MapVariant = 'full' | 'tech' | 'finance' | 'happy' | 'commodity';
+export type MapVariant = 'full' | 'tech' | 'finance' | 'media' | 'happy' | 'commodity';
 
 const _desktop = isDesktopRuntime();
 
@@ -106,6 +106,11 @@ const VARIANT_LAYER_ORDER: Record<MapVariant, Array<keyof MapLayers>> = {
     'gulfInvestments', 'tradeRoutes', 'cables', 'pipelines',
     'outages', 'weather', 'economic', 'waterways',
     'resilienceScore', 'natural', 'cyberThreats', 'sanctions', 'dayNight',
+  ],
+  media: [
+    'hotspots', 'protests', 'natural', 'weather',
+    'outages', 'economic', 'techEvents', 'datacenters',
+    'cables', 'tradeRoutes', 'dayNight',
   ],
   happy: [
     'positiveEvents', 'kindness', 'happiness', 'resilienceScore',

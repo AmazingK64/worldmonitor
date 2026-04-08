@@ -582,6 +582,137 @@ const FINANCE_MOBILE_MAP_LAYERS: MapLayers = {
 };
 
 // ============================================
+// MEDIA VARIANT (Newsroom/Editorial)
+// ============================================
+const MEDIA_PANELS: Record<string, PanelConfig> = {
+  map: { name: 'Story Geography Map', enabled: true, priority: 1 },
+  'live-news': { name: 'Breaking Story Radar', enabled: true, priority: 1 },
+  insights: { name: 'AI Editorial Brief', enabled: true, priority: 1 },
+  politics: { name: 'Top Stories', enabled: true, priority: 1 },
+  'media-business': { name: 'Media Business', enabled: true, priority: 1 },
+  'media-policy': { name: 'Policy & Regulation', enabled: true, priority: 1 },
+  'media-platforms': { name: 'Platforms & Distribution', enabled: true, priority: 1 },
+  'media-culture': { name: 'Culture & Entertainment', enabled: true, priority: 1 },
+  'media-tech': { name: 'Media Tech & AI', enabled: true, priority: 1 },
+  'media-audience': { name: 'Audience & Creator Economy', enabled: true, priority: 1 },
+  'media-regions': { name: 'Regional Media Watch', enabled: true, priority: 2 },
+  'social-velocity': { name: 'Story Velocity', enabled: true, priority: 2 },
+  monitors: { name: 'Topic Monitors', enabled: true, priority: 2 },
+};
+
+const MEDIA_MAP_LAYERS: MapLayers = {
+  gpsJamming: false,
+  satellites: false,
+  conflicts: false,
+  bases: false,
+  cables: true,
+  pipelines: false,
+  hotspots: true,
+  ais: false,
+  nuclear: false,
+  irradiators: false,
+  radiationWatch: false,
+  sanctions: false,
+  weather: true,
+  economic: true,
+  waterways: false,
+  outages: true,
+  cyberThreats: false,
+  datacenters: true,
+  protests: true,
+  flights: false,
+  military: false,
+  natural: true,
+  spaceports: false,
+  minerals: false,
+  fires: false,
+  ucdpEvents: false,
+  displacement: false,
+  climate: false,
+  startupHubs: false,
+  cloudRegions: false,
+  accelerators: false,
+  techHQs: false,
+  techEvents: true,
+  stockExchanges: false,
+  financialCenters: false,
+  centralBanks: false,
+  commodityHubs: false,
+  gulfInvestments: false,
+  positiveEvents: false,
+  kindness: false,
+  happiness: false,
+  speciesRecovery: false,
+  renewableInstallations: false,
+  tradeRoutes: true,
+  iranAttacks: false,
+  ciiChoropleth: false,
+  resilienceScore: false,
+  dayNight: false,
+  miningSites: false,
+  processingPlants: false,
+  commodityPorts: false,
+  webcams: false,
+  diseaseOutbreaks: false,
+};
+
+const MEDIA_MOBILE_MAP_LAYERS: MapLayers = {
+  gpsJamming: false,
+  satellites: false,
+  conflicts: false,
+  bases: false,
+  cables: false,
+  pipelines: false,
+  hotspots: true,
+  ais: false,
+  nuclear: false,
+  irradiators: false,
+  radiationWatch: false,
+  sanctions: false,
+  weather: false,
+  economic: true,
+  waterways: false,
+  outages: true,
+  cyberThreats: false,
+  datacenters: false,
+  protests: true,
+  flights: false,
+  military: false,
+  natural: true,
+  spaceports: false,
+  minerals: false,
+  fires: false,
+  ucdpEvents: false,
+  displacement: false,
+  climate: false,
+  startupHubs: false,
+  cloudRegions: false,
+  accelerators: false,
+  techHQs: false,
+  techEvents: false,
+  stockExchanges: false,
+  financialCenters: false,
+  centralBanks: false,
+  commodityHubs: false,
+  gulfInvestments: false,
+  positiveEvents: false,
+  kindness: false,
+  happiness: false,
+  speciesRecovery: false,
+  renewableInstallations: false,
+  tradeRoutes: false,
+  iranAttacks: false,
+  ciiChoropleth: false,
+  resilienceScore: false,
+  dayNight: false,
+  miningSites: false,
+  processingPlants: false,
+  commodityPorts: false,
+  webcams: false,
+  diseaseOutbreaks: false,
+};
+
+// ============================================
 // HAPPY VARIANT (Good News & Progress)
 // ============================================
 const HAPPY_PANELS: Record<string, PanelConfig> = {
@@ -886,6 +1017,7 @@ const COMMODITY_MOBILE_MAP_LAYERS: MapLayers = {
 export const ALL_PANELS: Record<string, PanelConfig> = {
   ...HAPPY_PANELS,
   ...COMMODITY_PANELS,
+  ...MEDIA_PANELS,
   ...TECH_PANELS,
   ...FINANCE_PANELS,
   ...FULL_PANELS,
@@ -896,6 +1028,7 @@ export const VARIANT_DEFAULTS: Record<string, string[]> = {
   full:      Object.keys(FULL_PANELS),
   tech:      Object.keys(TECH_PANELS),
   finance:   Object.keys(FINANCE_PANELS),
+  media:     Object.keys(MEDIA_PANELS),
   commodity: Object.keys(COMMODITY_PANELS),
   happy:     Object.keys(HAPPY_PANELS),
 };
@@ -909,6 +1042,11 @@ export const VARIANT_PANEL_OVERRIDES: Partial<Record<string, Partial<Record<stri
     map:         { name: 'Global Markets Map' },
     'live-news': { name: 'Market Headlines' },
     insights:    { name: 'AI Market Insights' },
+  },
+  media: {
+    map:         { name: 'Story Geography Map' },
+    'live-news': { name: 'Breaking Story Radar' },
+    insights:    { name: 'AI Editorial Brief' },
   },
   tech: {
     map:         { name: 'Global Tech Map' },
@@ -972,6 +1110,8 @@ export const DEFAULT_MAP_LAYERS = SITE_VARIANT === 'happy'
     ? TECH_MAP_LAYERS 
     : SITE_VARIANT === 'finance' 
       ? FINANCE_MAP_LAYERS 
+      : SITE_VARIANT === 'media'
+        ? MEDIA_MAP_LAYERS
       : SITE_VARIANT === 'commodity'
         ? COMMODITY_MAP_LAYERS
         : FULL_MAP_LAYERS;
@@ -982,6 +1122,8 @@ export const MOBILE_DEFAULT_MAP_LAYERS = SITE_VARIANT === 'happy'
     ? TECH_MOBILE_MAP_LAYERS 
     : SITE_VARIANT === 'finance' 
       ? FINANCE_MOBILE_MAP_LAYERS 
+      : SITE_VARIANT === 'media'
+        ? MEDIA_MOBILE_MAP_LAYERS
       : SITE_VARIANT === 'commodity'
         ? COMMODITY_MOBILE_MAP_LAYERS
         : FULL_MOBILE_MAP_LAYERS;
@@ -1056,6 +1198,18 @@ export const PANEL_CATEGORY_MAP: Record<string, { labelKey: string; panelKeys: s
   techMarkets: {
     labelKey: 'header.panelCatMarkets',
     panelKeys: ['markets', 'finance', 'crypto', 'economic', 'sanctions-pressure', 'polymarket', 'macro-signals', 'etf-flows', 'stablecoins', 'layoffs', 'monitors', 'world-clock'],
+  },
+
+  // Media variant
+  mediaCoverage: {
+    labelKey: 'header.panelCatRegionalNews',
+    panelKeys: ['politics', 'media-business', 'media-policy', 'media-platforms', 'media-culture', 'media-tech', 'media-audience', 'media-regions'],
+    variants: ['media'],
+  },
+  mediaWorkflow: {
+    labelKey: 'header.panelCatCore',
+    panelKeys: ['map', 'live-news', 'insights', 'social-velocity', 'monitors'],
+    variants: ['media'],
   },
 
   // Finance variant

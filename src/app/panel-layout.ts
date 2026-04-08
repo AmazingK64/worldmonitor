@@ -337,6 +337,15 @@ export class PanelLayoutManager implements AppModule {
               <span class="variant-label">${t('header.finance')}</span>
             </a>
             <span class="variant-divider"></span>
+            <a href="${vHref('media', 'https://media.worldmonitor.app')}"
+               class="variant-option ${SITE_VARIANT === 'media' ? 'active' : ''}"
+               data-variant="media"
+               ${vTarget('media')}
+               title="Media${SITE_VARIANT === 'media' ? ` ${t('common.currentVariant')}` : ''}">
+              <span class="variant-icon">📰</span>
+              <span class="variant-label">Media</span>
+            </a>
+            <span class="variant-divider"></span>
             <a href="${vHref('commodity', 'https://commodity.worldmonitor.app')}"
                class="variant-option ${SITE_VARIANT === 'commodity' ? 'active' : ''}"
                data-variant="commodity"
@@ -410,6 +419,7 @@ export class PanelLayoutManager implements AppModule {
           { key: 'full', icon: '🌍', label: t('header.world') },
           { key: 'tech', icon: '💻', label: t('header.tech') },
           { key: 'finance', icon: '📈', label: t('header.finance') },
+          { key: 'media', icon: '📰', label: 'Media' },
           { key: 'commodity', icon: '⛏️', label: t('header.commodity') },
           { key: 'happy', icon: '☀️', label: 'Good News' },
         ];
@@ -473,7 +483,7 @@ export class PanelLayoutManager implements AppModule {
         <div class="map-section" id="mapSection">
           <div class="panel-header">
             <div class="panel-header-left">
-              <span class="panel-title">${SITE_VARIANT === 'tech' ? t('panels.techMap') : SITE_VARIANT === 'happy' ? 'Good News Map' : t('panels.map')}</span>
+              <span class="panel-title">${SITE_VARIANT === 'tech' ? t('panels.techMap') : SITE_VARIANT === 'media' ? 'Media Map' : SITE_VARIANT === 'happy' ? 'Good News Map' : t('panels.map')}</span>
             </div>
             <span class="header-clock" id="headerClock" translate="no"></span>
             <div class="map-header-actions">

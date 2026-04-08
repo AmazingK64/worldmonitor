@@ -3,6 +3,7 @@
 // VITE_VARIANT=tech → tech.worldmonitor.app (tech-focused)
 // VITE_VARIANT=full → worldmonitor.app (geopolitical)
 // VITE_VARIANT=finance → finance.worldmonitor.app (markets/trading)
+// VITE_VARIANT=media → media.worldmonitor.app (newsroom/media)
 
 export { SITE_VARIANT } from './variant';
 
