@@ -13,6 +13,7 @@ import {
 import { fetchOllamaModels } from '@/services/ollama-models';
 import {
   RUNTIME_FEATURES,
+  getFeatureSecretFields,
   getEffectiveSecrets,
   getRuntimeConfigSnapshot,
   getSecretState,
@@ -293,7 +294,7 @@ function renderFeatureSection(area: HTMLElement, cat: SettingsCategory): void {
     const borderClass = available ? 'ready' : allStaged ? 'staged' : 'needs';
     const pillClass = available ? 'ok' : allStaged ? 'staged' : 'warn';
     const pillLabel = available ? 'Ready' : allStaged ? 'Staged' : 'Needs keys';
-    const secretRows = effectiveSecrets.map(key => renderSecretInput(key, feature.id)).join('');
+    const secretRows = getFeatureSecretFields(feature).map(key => renderSecretInput(key, feature.id)).join('');
     const fallbackHtml = (available || allStaged) ? '' : `<p class="settings-feat-fallback">${escapeHtml(feature.fallback)}</p>`;
 
     return `
@@ -534,6 +535,9 @@ async function loadOllamaModelsIntoSelect(select: HTMLSelectElement): Promise<vo
   const ollamaUrl = settingsManager.getPending('OLLAMA_API_URL')
     || snapshot.secrets['OLLAMA_API_URL']?.value
     || '';
+  const ollamaApiKey = settingsManager.getPending('OLLAMA_API_KEY')
+    || snapshot.secrets['OLLAMA_API_KEY']?.value
+    || '';
   if (!ollamaUrl) {
     select.innerHTML = '<option value="" disabled selected>Set Ollama URL first</option>';
     return;
@@ -543,7 +547,7 @@ async function loadOllamaModelsIntoSelect(select: HTMLSelectElement): Promise<vo
     || snapshot.secrets['OLLAMA_MODEL']?.value
     || '';
 
-  const models = await fetchOllamaModels(ollamaUrl);
+  const models = await fetchOllamaModels(ollamaUrl, ollamaApiKey);
 
   if (models.length === 0) {
     const manual = select.parentElement?.querySelector<HTMLInputElement>('input[data-model-manual]');

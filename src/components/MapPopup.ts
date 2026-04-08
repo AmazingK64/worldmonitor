@@ -9,7 +9,7 @@ import type { TechHubActivity } from '@/services/tech-activity';
 import type { GeoHubActivity } from '@/services/geo-activity';
 import { escapeHtml, sanitizeUrl } from '@/utils/sanitize';
 import { isMobileDevice, getCSSColor } from '@/utils';
-import { t } from '@/services/i18n';
+import { getCurrentLanguage, t } from '@/services/i18n';
 import { fetchHotspotContext, formatArticleDate, extractDomain, type GdeltArticle } from '@/services/gdelt-intel';
 import { getWingbitsLiveFlight } from '@/services/wingbits';
 import { isFeatureAvailable } from '@/services/runtime-config';
@@ -18,6 +18,7 @@ import { getHotspotEscalation, getEscalationChange24h } from '@/services/hotspot
 import { getCableHealthRecord } from '@/services/cable-health';
 import { nameToCountryCode } from '@/services/country-geometry';
 import { sparkline } from '@/utils/sparkline';
+import { generateEventBrief } from '@/services/event-brief';
 
 function formatPositionSource(source: string): string {
   if (source === 'POSITION_SOURCE_WINGBITS') {
@@ -38,6 +39,38 @@ function fmtUtcTime(utc: string | undefined): string {
 function fmtDelayMin(min: number | undefined): string {
   if (min === undefined || min === 0) return '';
   return `<span style="color:${min > 0 ? '#f97316' : '#22c55e'};font-size:10px;margin-left:3px">${min > 0 ? '+' : ''}${min}m</span>`;
+}
+
+type PopupRecord = Record<string, unknown>;
+
+function pickString(record: PopupRecord, keys: string[]): string {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return '';
+}
+
+function pickNumber(record: PopupRecord, keys: string[]): number | null {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
+function pickStringArray(record: PopupRecord, keys: string[]): string[] {
+  for (const key of keys) {
+    const value = record[key];
+    if (Array.isArray(value)) {
+      return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+    }
+  }
+  return [];
+}
+
+function compactParts(parts: Array<string | null | undefined>): string[] {
+  return parts.map(part => (typeof part === 'string' ? part.trim() : '')).filter(Boolean);
 }
 
 export type PopupType = 'conflict' | 'hotspot' | 'earthquake' | 'weather' | 'base' | 'waterway' | 'apt' | 'cyberThreat' | 'nuclear' | 'economic' | 'irradiator' | 'pipeline' | 'cable' | 'cable-advisory' | 'repair-ship' | 'outage' | 'datacenter' | 'datacenterCluster' | 'ais' | 'protest' | 'protestCluster' | 'flight' | 'aircraft' | 'militaryFlight' | 'militaryVessel' | 'militaryFlightCluster' | 'militaryVesselCluster' | 'natEvent' | 'port' | 'spaceport' | 'mineral' | 'startupHub' | 'cloudRegion' | 'techHQ' | 'accelerator' | 'techEvent' | 'techHQCluster' | 'techEventCluster' | 'techActivity' | 'geoActivity' | 'stockExchange' | 'financialCenter' | 'centralBank' | 'commodityHub' | 'iranEvent' | 'gpsJamming' | 'radiation';
@@ -186,6 +219,8 @@ export class MapPopup {
   private sheetCurrentOffset = 0;
   private readonly mobileDismissThreshold = 96;
   private outsideListenerTimeoutId: number | null = null;
+  private aiBriefAbortController: AbortController | null = null;
+  private aiBriefRequestId = 0;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -216,6 +251,7 @@ export class MapPopup {
 
     // Append to body to avoid container overflow clipping
     document.body.appendChild(this.popup);
+    this.attachAiBrief(data);
 
     // Close button handler via event delegation on the popup element.
     // This avoids re-querying and re-attaching listeners after innerHTML.
@@ -390,6 +426,10 @@ export class MapPopup {
   };
 
   public hide(): void {
+    this.aiBriefAbortController?.abort();
+    this.aiBriefAbortController = null;
+    this.aiBriefRequestId += 1;
+
     if (this.outsideListenerTimeoutId !== null) {
       window.clearTimeout(this.outsideListenerTimeoutId);
       this.outsideListenerTimeoutId = null;
@@ -419,6 +459,97 @@ export class MapPopup {
   public setCableActivity(advisories: CableAdvisory[], repairShips: RepairShip[]): void {
     this.cableAdvisories = advisories;
     this.repairShips = repairShips;
+  }
+
+  private attachAiBrief(popupData: PopupData): void {
+    const popupBody = this.popup?.querySelector('.popup-body');
+    const aiInput = popupBody ? this.buildAiBriefInput(popupData) : null;
+    if (!popupBody || !aiInput) return;
+
+    const section = document.createElement('section');
+    section.className = 'popup-ai-brief';
+    section.innerHTML = `
+      <div class="popup-ai-brief-header">
+        <span class="popup-ai-brief-title">${escapeHtml(t('popups.aiBrief.title'))}</span>
+        <span class="popup-ai-brief-meta"></span>
+      </div>
+      <p class="popup-ai-brief-content loading">${escapeHtml(t('popups.aiBrief.loading'))}</p>
+    `;
+    popupBody.appendChild(section);
+
+    const contentEl = section.querySelector('.popup-ai-brief-content');
+    const metaEl = section.querySelector('.popup-ai-brief-meta');
+    if (!contentEl || !metaEl) return;
+
+    const requestId = ++this.aiBriefRequestId;
+    this.aiBriefAbortController?.abort();
+    this.aiBriefAbortController = new AbortController();
+
+    void generateEventBrief(
+      aiInput.headlines,
+      aiInput.geoContext,
+      getCurrentLanguage(),
+      this.aiBriefAbortController.signal,
+    ).then((result) => {
+      if (!this.popup || requestId !== this.aiBriefRequestId) return;
+      if (!result) {
+        contentEl.textContent = t('popups.aiBrief.unavailable');
+        contentEl.classList.remove('loading');
+        return;
+      }
+      contentEl.textContent = result.summary;
+      contentEl.classList.remove('loading');
+      metaEl.textContent = `${t('popups.aiBrief.sourceLabel')}: ${result.model || result.provider}`;
+    }).catch((error) => {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      if (!this.popup || requestId !== this.aiBriefRequestId) return;
+      contentEl.textContent = t('popups.aiBrief.unavailable');
+      contentEl.classList.remove('loading');
+    });
+  }
+
+  private buildAiBriefInput(popupData: PopupData): { headlines: string[]; geoContext: string } | null {
+    const record = popupData.data as unknown as PopupRecord;
+    const title = pickString(record, ['title', 'name', 'shortName', 'locationName', 'city', 'region', 'country', 'h3']);
+    const location = compactParts([
+      pickString(record, ['locationName', 'location', 'city', 'region']),
+      pickString(record, ['country']),
+    ]).join(', ');
+    const category = pickString(record, ['category', 'type', 'tier']);
+    const severity = pickString(record, ['severity', 'status', 'level']);
+    const description = pickString(record, ['description', 'summary']);
+    const impact = pickString(record, ['impact']);
+    const arrays = [
+      ...pickStringArray(record, ['specialties']).slice(0, 3).map(item => `Focus: ${item}`),
+      ...pickStringArray(record, ['commodities']).slice(0, 3).map(item => `Commodity: ${item}`),
+    ];
+    const counts = compactParts([
+      pickNumber(record, ['count']) !== null ? `Signal count: ${pickNumber(record, ['count'])}` : '',
+      pickNumber(record, ['sampleCount']) !== null ? `Sample count: ${pickNumber(record, ['sampleCount'])}` : '',
+      pickNumber(record, ['aircraftCount']) !== null ? `Aircraft involved: ${pickNumber(record, ['aircraftCount'])}` : '',
+      pickNumber(record, ['marketCap']) !== null ? `Market cap: ${pickNumber(record, ['marketCap'])}` : '',
+    ]);
+    const headlines = compactParts([
+      title ? `Subject: ${title}` : `Popup type: ${popupData.type}`,
+      location ? `Location: ${location}` : '',
+      category ? `Category: ${category}` : '',
+      severity ? `Severity/status: ${severity}` : '',
+      impact ? `Impact: ${impact}` : '',
+      description ? `Description: ${description}` : '',
+      ...arrays,
+      ...counts,
+      ...(popupData.relatedNews || []).slice(0, 3).map(item => `Related coverage: ${item.title}`),
+    ]).slice(0, 8);
+
+    if (headlines.length === 0) return null;
+
+    const geoContext = compactParts([
+      `Popup type: ${popupData.type}`,
+      location ? `Location: ${location}` : '',
+      title ? `Primary entity: ${title}` : '',
+    ]).join('. ');
+
+    return { headlines, geoContext };
   }
 
   private renderContent(data: PopupData): string {

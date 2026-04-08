@@ -139,7 +139,7 @@ export async function summarizeArticle(
               { role: 'user', content: userPrompt },
             ],
             temperature: 0.3,
-            max_tokens: 100,
+            max_tokens: mode === 'event-brief' ? 180 : 100,
             top_p: 0.9,
             ...extraBody,
           }),
@@ -158,12 +158,12 @@ export async function summarizeArticle(
         const rawText = typeof message?.content === 'string' ? message.content.trim() : '';
         let rawContent = stripThinkingTags(rawText);
 
-        if (['brief', 'analysis'].includes(mode) && rawContent.length < 20) {
+        if (['brief', 'analysis', 'event-brief'].includes(mode) && rawContent.length < 20) {
           console.warn(`[SummarizeArticle:${provider}] Output too short after stripping (${rawContent.length} chars), rejecting`);
           return null;
         }
 
-        if (['brief', 'analysis'].includes(mode) && hasReasoningPreamble(rawContent)) {
+        if (['brief', 'analysis', 'event-brief'].includes(mode) && hasReasoningPreamble(rawContent)) {
           console.warn(`[SummarizeArticle:${provider}] Reasoning preamble detected, rejecting`);
           return null;
         }

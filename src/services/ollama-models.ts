@@ -5,11 +5,13 @@ function makeTimeout(ms: number): AbortSignal {
   return ctrl.signal;
 }
 
-export async function fetchOllamaModels(ollamaUrl: string): Promise<string[]> {
+export async function fetchOllamaModels(ollamaUrl: string, apiKey?: string): Promise<string[]> {
   if (!ollamaUrl) return [];
+  const headers = apiKey ? { Authorization: `Bearer ${apiKey}` } : undefined;
 
   try {
     const res = await fetch(new URL('/api/tags', ollamaUrl).toString(), {
+      headers,
       signal: makeTimeout(5000),
     });
     if (res.ok) {
@@ -21,6 +23,7 @@ export async function fetchOllamaModels(ollamaUrl: string): Promise<string[]> {
 
   try {
     const res = await fetch(new URL('/v1/models', ollamaUrl).toString(), {
+      headers,
       signal: makeTimeout(5000),
     });
     if (res.ok) {

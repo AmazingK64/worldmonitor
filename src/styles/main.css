@@ -7116,6 +7116,46 @@ a.prediction-link:hover {
   padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
 }
 
+.popup-ai-brief {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.popup-ai-brief-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.popup-ai-brief-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.popup-ai-brief-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.popup-ai-brief-content {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.popup-ai-brief-content.loading {
+  color: var(--text-muted);
+}
+
 .popup-subtitle {
   font-size: 10px;
   color: var(--green);

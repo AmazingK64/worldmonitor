@@ -1,5 +1,6 @@
 import { Panel } from './Panel';
 import {
+  getFeatureSecretFields,
   RUNTIME_FEATURES,
   getEffectiveSecrets,
   getRuntimeConfigSnapshot,
@@ -273,7 +274,7 @@ export class RuntimeConfigPanel extends Panel {
     );
     const pillClass = available ? 'ok' : allStaged ? 'staged' : 'warn';
     const pillLabel = available ? t('modals.runtimeConfig.status.ready') : allStaged ? t('modals.runtimeConfig.status.staged') : t('modals.runtimeConfig.status.needsKeys');
-    const secrets = effectiveSecrets.map((key) => this.renderSecretRow(key)).join('');
+    const secrets = getFeatureSecretFields(feature).map((key) => this.renderSecretRow(key)).join('');
     const desktop = isDesktopRuntime();
     const fallbackHtml = available || allStaged ? '' : `<p class="runtime-feature-fallback fallback">${escapeHtml(feature.fallback)}</p>`;
 
@@ -539,6 +540,9 @@ export class RuntimeConfigPanel extends Panel {
     const ollamaUrl = this.pendingSecrets.get('OLLAMA_API_URL')
       || snapshot.secrets.OLLAMA_API_URL?.value
       || '';
+    const ollamaApiKey = this.pendingSecrets.get('OLLAMA_API_KEY')
+      || snapshot.secrets.OLLAMA_API_KEY?.value
+      || '';
     if (!ollamaUrl) {
       select.innerHTML = '<option value="" disabled selected>Set Ollama URL first</option>';
       return;
@@ -549,7 +553,7 @@ export class RuntimeConfigPanel extends Panel {
       || '';
 
     try {
-      const models = await fetchOllamaModelsFromService(ollamaUrl);
+      const models = await fetchOllamaModelsFromService(ollamaUrl, ollamaApiKey);
 
       if (!select.isConnected) return;
 

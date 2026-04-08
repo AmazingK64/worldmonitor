@@ -112,6 +112,22 @@ Rules:
 - Output ONLY the translated text.
 - If the text is already in ${targetLang}, return it as is.`;
     userPrompt = `Translate to ${targetLang}:\n${headlines[0]}`;
+  } else if (opts.mode === 'event-brief') {
+    const mediaInstruction = opts.variant === 'media'
+      ? '\n- When relevant, briefly mention why this matters for newsroom planning, audience attention, platform distribution, brand/public sentiment, or advertiser risk.'
+      : '';
+    const zhInstruction = opts.lang === 'zh'
+      ? '\n- Output in Simplified Chinese.\n- Write a single paragraph of 50-200 Chinese characters.'
+      : '\n- Write a single paragraph of roughly 40-90 words.';
+    systemPrompt = `${dateContext}
+
+Write a concise event interpretation for a dashboard popup.
+Rules:
+- Treat the lines below as signals about the SAME event, entity, or location
+- Explain what happened first, then why it matters
+- Use only the provided facts and context; if uncertain, use cautious wording like "likely" or "possibly"
+- No bullet points, no numbered list, no meta-commentary, no hype${mediaInstruction}${zhInstruction}${langInstruction}`;
+    userPrompt = `Interpret this event in one short paragraph:\n${headlineText}${intelSection}`;
   } else {
     systemPrompt = isTechVariant
       ? `${dateContext}\n\nPick the most important tech headline and summarize it in 2 concise sentences (under 60 words). Each headline is a separate story - NEVER merge facts from different headlines. Focus on startups, AI, funding, products. Ignore politics unless directly about tech regulation.${langInstruction}`

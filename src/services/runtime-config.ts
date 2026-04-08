@@ -24,6 +24,7 @@ export type RuntimeSecretKey =
   | 'NASA_FIRMS_API_KEY'
   | 'UCDP_ACCESS_TOKEN'
   | 'OLLAMA_API_URL'
+  | 'OLLAMA_API_KEY'
   | 'OLLAMA_MODEL'
   | 'WORLDMONITOR_API_KEY'
   | 'WTO_API_KEY'
@@ -118,8 +119,8 @@ const defaultToggles: Record<RuntimeFeatureId, boolean> = {
 export const RUNTIME_FEATURES: RuntimeFeatureDefinition[] = [
   {
     id: 'aiOllama',
-    name: 'Ollama local summarization',
-    description: 'Local LLM provider via OpenAI-compatible endpoint (Ollama or LM Studio, desktop-first).',
+    name: 'OpenAI-compatible summarization',
+    description: 'Compatible endpoint for Ollama, LM Studio, Minimax, and similar providers.',
     requiredSecrets: ['OLLAMA_API_URL', 'OLLAMA_MODEL'],
     fallback: 'Falls back to Groq, then OpenRouter, then local browser model.',
   },
@@ -374,6 +375,7 @@ function seedSecretsFromEnvironment(): void {
   if (isDesktopRuntime()) return;
 
   const keys = new Set<RuntimeSecretKey>(RUNTIME_FEATURES.flatMap(feature => feature.requiredSecrets));
+  keys.add('OLLAMA_API_KEY');
   for (const key of keys) {
     const value = readEnvSecret(key);
     if (value) {
@@ -439,6 +441,14 @@ export function isFeatureAvailable(featureId: RuntimeFeatureId): boolean {
 
 export function getEffectiveSecrets(feature: RuntimeFeatureDefinition): RuntimeSecretKey[] {
   return (isDesktopRuntime() && feature.desktopRequiredSecrets) ? feature.desktopRequiredSecrets : feature.requiredSecrets;
+}
+
+export function getFeatureSecretFields(feature: RuntimeFeatureDefinition): RuntimeSecretKey[] {
+  const visibleSecrets = [...getEffectiveSecrets(feature)];
+  if (feature.id === 'aiOllama' && !visibleSecrets.includes('OLLAMA_API_KEY')) {
+    visibleSecrets.push('OLLAMA_API_KEY');
+  }
+  return visibleSecrets;
 }
 
 export function setFeatureToggle(featureId: RuntimeFeatureId, enabled: boolean): void {

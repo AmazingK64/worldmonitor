@@ -631,8 +631,9 @@
         "ABUSEIPDB_API_KEY": "Optional enrichment source for malicious IP reputation.",
         "FINNHUB_API_KEY": "Real-time stock quotes and market data.",
         "NASA_FIRMS_API_KEY": "Fire Information for Resource Management System.",
-        "OLLAMA_API_URL": "e.g. http://127.0.0.1:11434 (Ollama) or http://127.0.0.1:1234/v1 (LM Studio) — OpenAI-compatible endpoint.",
-        "OLLAMA_MODEL": "e.g. llama3.1:8b — model tag to use for summarization."
+        "OLLAMA_API_URL": "e.g. http://127.0.0.1:11434 (Ollama), http://127.0.0.1:1234/v1 (LM Studio), or another OpenAI-compatible endpoint such as Minimax.",
+        "OLLAMA_API_KEY": "Optional bearer token for compatible providers that require authentication.",
+        "OLLAMA_MODEL": "e.g. llama3.1:8b or a Minimax model ID used for summary generation."
       }
     },
     "settingsWindow": {
@@ -2189,6 +2190,12 @@
     "capacity": "Capacity",
     "alerts": "Active Alerts",
     "updated": "Updated",
+    "aiBrief": {
+      "title": "AI Brief",
+      "loading": "Generating event interpretation...",
+      "unavailable": "AI interpretation is currently unavailable.",
+      "sourceLabel": "Model"
+    },
     "common": {
       "start": "START",
       "end": "END",

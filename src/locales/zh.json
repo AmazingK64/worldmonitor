@@ -527,8 +527,9 @@
         "ABUSEIPDB_API_KEY": "恶意IP信誉的可选增强数据源。",
         "FINNHUB_API_KEY": "实时股票报价和市场数据。",
         "NASA_FIRMS_API_KEY": "消防信息资源管理系统。",
-        "OLLAMA_API_URL": "e.g. http://127.0.0.1:11434 (Ollama) or http://127.0.0.1:1234/v1 (LM Studio) — OpenAI-compatible endpoint.",
-        "OLLAMA_MODEL": "e.g. llama3.1:8b — model tag to use for summarization."
+        "OLLAMA_API_URL": "例如 http://127.0.0.1:11434（Ollama）、http://127.0.0.1:1234/v1（LM Studio），或 Minimax 这类兼容 OpenAI 的接口地址。",
+        "OLLAMA_API_KEY": "可选的 Bearer Token；当兼容提供方需要鉴权时填写。",
+        "OLLAMA_MODEL": "例如 llama3.1:8b，或用于摘要生成的 Minimax 模型 ID。"
       }
     },
     "settingsWindow": {
@@ -1890,6 +1891,12 @@
     "capacity": "容量",
     "alerts": "活跃警报",
     "updated": "已更新",
+    "aiBrief": {
+      "title": "AI 解读",
+      "loading": "正在生成事件简要解读...",
+      "unavailable": "当前无法生成 AI 解读。",
+      "sourceLabel": "模型"
+    },
     "common": {
       "start": "开始",
       "end": "结束",
