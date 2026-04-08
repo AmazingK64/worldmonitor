@@ -414,6 +414,45 @@ export const VARIANT_FEEDS: Record<string, Record<string, ServerFeed[]>> = {
       { name: 'Shareable', url: 'https://www.shareable.net/feed/' },
     ],
   },
+
+  media: {
+    mediaindustry: [
+      { name: 'Digiday', url: 'https://www.digiday.com/feed/' },
+      { name: 'Nieman Lab', url: 'https://www.niemanlab.org/feed/' },
+      { name: 'Poynter', url: 'https://www.poynter.org/feed/' },
+      { name: 'Columbia Journalism Review', url: 'https://www.cjr.org/feed/' },
+      { name: 'Adweek', url: 'https://www.adweek.com/feed/' },
+      { name: 'Axios Media', url: 'https://www.axios.com/media' },
+    ],
+    entertainment: [
+      { name: 'Variety', url: 'https://variety.com/feed/' },
+      { name: 'Hollywood Reporter', url: 'https://www.hollywoodreporter.com/feed/' },
+      { name: 'Deadline', url: 'https://deadline.com/feed/' },
+      { name: 'Billboard', url: 'https://www.billboard.com-feed' },
+      { name: 'Screen Daily', url: 'https://www.screendaily.com/feed' },
+    ],
+    broadcasting: [
+      { name: 'Broadcasting & Cable', url: 'https://www.nexttv.com/rss.xml' },
+      { name: 'TV News Check', url: 'https://tvnewscheck.com/rss/' },
+      { name: 'Rapid TV News', url: 'https://www.rapidtvnews.com/feed' },
+    ],
+    digitalmedia: [
+      { name: 'The Drum', url: 'https://www.thedrum.com/rss' },
+      { name: 'MediaPost', url: 'https://www.mediapost.com/rss/' },
+      { name: 'NetNews', url: 'https://www.netnews.com/feed' },
+      { name: 'TVB Europe', url: 'https://www.tvbeurope.com/feed/' },
+    ],
+    publishing: [
+      { name: 'Publishing Perspective', url: 'https://publishingperspectives.com/feed/' },
+      { name: 'Books & Publishing', url: 'https://booksandpublishing.com.au/feed/' },
+      { name: 'Shelf Awareness', url: 'https://www.shelf-awareness.com/feed/' },
+    ],
+    marketing: [
+      { name: 'Marketing Week', url: 'https://www.marketingweek.com/feed/' },
+      { name: 'Campaign', url: 'https://www.campaignlive.com/rss' },
+      { name: 'Contagious', url: 'https://www.contagious.com/rss' },
+    ],
+  },
 };
 
 export const INTEL_SOURCES: ServerFeed[] = [

@@ -493,6 +493,33 @@ export class App {
         localStorage.setItem(HAPPY_PANEL_FIX_KEY, 'done');
       }
 
+      const MEDIA_HOME_REFOCUS_KEY = 'worldmonitor-media-home-refocus-v1';
+      if (SITE_VARIANT === 'media' && !localStorage.getItem(MEDIA_HOME_REFOCUS_KEY)) {
+        const retiredDefaultKeys = ['politics', 'media-regions', 'social-velocity', 'monitors'];
+        const promotedKeys = ['media-storyline', 'media-business-radar'];
+        let migrated = false;
+        for (const key of retiredDefaultKeys) {
+          if (panelSettings[key]?.enabled) {
+            panelSettings[key] = { ...panelSettings[key]!, enabled: false };
+            migrated = true;
+          }
+        }
+        for (const key of promotedKeys) {
+          const nextConfig = getEffectivePanelConfig(key, SITE_VARIANT);
+          if (!panelSettings[key]) {
+            panelSettings[key] = { ...nextConfig, enabled: true };
+            migrated = true;
+            continue;
+          }
+          if (!panelSettings[key]?.enabled) {
+            panelSettings[key] = { ...panelSettings[key]!, ...nextConfig, enabled: true };
+            migrated = true;
+          }
+        }
+        if (migrated) saveToStorage(STORAGE_KEYS.panels, panelSettings);
+        localStorage.setItem(MEDIA_HOME_REFOCUS_KEY, 'done');
+      }
+
       console.log('[App] Loaded panel settings from storage:', Object.entries(panelSettings).filter(([_, v]) => !v.enabled).map(([k]) => k));
 
       // One-time migration: reorder panels for existing users (v1.9 panel layout)

@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "World Monitor",
-    "description": "AI驱动的全球态势感知"
+    "title": "世界监测台",
+    "description": "AI驱动的行业监测与态势感知"
   },
   "countryBrief": {
     "identifying": "正在识别国家...",
@@ -204,7 +204,9 @@
     "panelCatCentralBanks": "央行与经济",
     "panelCatDeals": "交易与机构",
     "panelCatGulfMena": "海湾与中东",
-    "panelCatTradePolicy": "贸易政策"
+    "panelCatTradePolicy": "贸易政策",
+    "panelCatMediaCoverage": "传媒业务线",
+    "panelCatMediaOps": "编辑部工作台"
   },
   "panels": {
     "liveNews": "实时新闻",
@@ -238,6 +240,8 @@
     "finance": "金融",
     "tech": "科技",
     "crypto": "加密货币",
+    "mediaStoryline": "选题指挥板",
+    "mediaBusinessRadar": "传媒经营雷达",
     "heatmap": "板块热力图",
     "ai": "AI/ML",
     "layoffs": "裁员追踪",
@@ -1479,6 +1483,9 @@
       "generatingSummary": "正在生成摘要...",
       "summaryError": "无法生成摘要",
       "summaryFailed": "摘要失败",
+      "sortBy": "排序方式",
+      "sortNewest": "最新",
+      "sortRelevance": "相关性",
       "sources": "{{count}}个来源",
       "relatedAssetsNear": "{{location}}附近的相关资产"
     },
@@ -1804,6 +1811,51 @@
     },
     "socialVelocity": {
       "infoTooltip": "<strong>社交传播速度</strong> 具有地缘政治意义的热门话题和病毒式内容。衡量社交媒体速度：一个故事相对于基线的传播速度。帮助在新兴叙事到达主流媒体之前发现它们。"
+    },
+    "mediaStoryline": {
+      "infoTooltip": "<strong>选题指挥板</strong> 把最新跨来源新闻流整理成可执行的选题方向、跟进队列和发稿窗口，适合编辑部值班与晨会使用。",
+      "metricTopics": "主线选题",
+      "metricTopicsHint": "今天值得立项的方向",
+      "metricAlerts": "高优先级线索",
+      "metricAlertsHint": "需要立即盯防的内容",
+      "metricSources": "覆盖来源数",
+      "metricSourcesHint": "最近监测到的独立来源",
+      "sectionAngles": "建议跟进角度",
+      "sectionFollowUps": "快速跟进队列",
+      "sectionWindows": "发布窗口建议",
+      "angleMentions": "相关提及 {{count}} 条",
+      "windowMorning": "完成早报推送、标题定调和主稿分工，确认首页首屏叙事。",
+      "windowAfternoon": "重点盯平台分发变化，补充解释稿和背景稿，刷新包装角度。",
+      "windowEvening": "复盘流量曲线，准备短视频和图解复用，并设置夜班监控主题。",
+      "bucketPlatforms": "平台政策与分发变化",
+      "bucketAi": "AI、版权与合成内容",
+      "bucketAudience": "受众迁移与创作者经济",
+      "bucketPolicy": "政策监管与合规",
+      "bucketBrand": "品牌营销与广告投放",
+      "empty": "当前还没有明显的主线信号",
+      "justNow": "刚刚",
+      "hoursAgo": "{{count}}小时前",
+      "daysAgo": "{{count}}天前"
+    },
+    "mediaBusinessRadar": {
+      "infoTooltip": "<strong>传媒经营雷达</strong> 把商业化、平台、政策和 AI 生产力相关信号合并成轻量经营视图，方便内容经营团队判断机会和风险。",
+      "metricSignals": "监测主题",
+      "metricSignalsHint": "当前有动静的业务主题",
+      "metricOpportunities": "机会主题",
+      "metricOpportunitiesHint": "多来源重复出现，可考虑跟进",
+      "metricRisks": "风险事项",
+      "metricRisksHint": "需要升级处理的高优先级内容",
+      "sectionRadar": "经营雷达",
+      "sectionActions": "建议动作",
+      "bucketRevenue": "收入与商业化",
+      "bucketRevenueHint": "同步检查广告库存、会员转化和品牌合作包装是否可承接热点。",
+      "bucketPlatforms": "平台分发",
+      "bucketPlatformsHint": "跟进首页推荐、账号矩阵和短视频适配策略，避免错过分发窗口。",
+      "bucketPolicy": "政策与版权",
+      "bucketPolicyHint": "扩展报道或二创复用前，先补版权和合规评估，降低后续风险。",
+      "bucketAi": "AI 生产效率",
+      "bucketAiHint": "识别哪些环节适合用 AI 加速脚本、剪辑、字幕和快讯生成。",
+      "empty": "当前还没有明显的经营信号"
     },
     "conservationWins": {
       "infoTooltip": "<strong>保育成就</strong> 正面的保育新闻：物种种群恢复、栖息地修复里程碑和反灭绝努力。来源：IUCN、WWF和保育研究出版物。"
@@ -2477,8 +2529,8 @@
     "unavailable": "不可用",
     "close": "关闭",
     "currentVariant": "(当前)",
-    "retry": "Retry",
-    "refresh": "Refresh",
+    "retry": "重试",
+    "refresh": "刷新",
     "all": "全部"
   },
   "preferences": {

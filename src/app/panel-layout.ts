@@ -70,6 +70,8 @@ import {
   CotPositioningPanel,
   DiseaseOutbreaksPanel,
   SocialVelocityPanel,
+  MediaStorylinePanel,
+  MediaBusinessRadarPanel,
 } from '@/components';
 import { SatelliteFiresPanel } from '@/components/SatelliteFiresPanel';
 import { focusInvestmentOnMap } from '@/services/investments-focus';
@@ -905,6 +907,8 @@ export class PanelLayoutManager implements AppModule {
 
     this.createPanel('disease-outbreaks', () => new DiseaseOutbreaksPanel());
     this.createPanel('social-velocity', () => new SocialVelocityPanel());
+    this.createPanel('media-storyline', () => new MediaStorylinePanel());
+    this.createPanel('media-business-radar', () => new MediaBusinessRadarPanel());
 
     this.lazyPanel('displacement', () =>
       import('@/components/DisplacementPanel').then(m => {

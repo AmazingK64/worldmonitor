@@ -156,6 +156,8 @@ import {
   SupplyChainPanel,
   DiseaseOutbreaksPanel,
   SocialVelocityPanel,
+  MediaStorylinePanel,
+  MediaBusinessRadarPanel,
 } from '@/components';
 import { SatelliteFiresPanel } from '@/components/SatelliteFiresPanel';
 import { classifyNewsItem } from '@/services/positive-classifier';
@@ -1151,6 +1153,8 @@ export class DataLoaderManager implements AppModule {
     this.ctx.allNews = collectedNews;
     this.ctx.initialLoadComplete = true;
     mountCommunityWidget();
+    (this.ctx.panels['media-storyline'] as MediaStorylinePanel | undefined)?.updateData(this.ctx.allNews);
+    (this.ctx.panels['media-business-radar'] as MediaBusinessRadarPanel | undefined)?.updateData(this.ctx.allNews);
 
     this.ctx.map?.updateHotspotActivity(this.ctx.allNews);
 

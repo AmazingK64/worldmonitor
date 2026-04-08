@@ -585,19 +585,17 @@ const FINANCE_MOBILE_MAP_LAYERS: MapLayers = {
 // MEDIA VARIANT (Newsroom/Editorial)
 // ============================================
 const MEDIA_PANELS: Record<string, PanelConfig> = {
-  map: { name: 'Story Geography Map', enabled: true, priority: 1 },
-  'live-news': { name: 'Breaking Story Radar', enabled: true, priority: 1 },
-  insights: { name: 'AI Editorial Brief', enabled: true, priority: 1 },
-  politics: { name: 'Top Stories', enabled: true, priority: 1 },
-  'media-business': { name: 'Media Business', enabled: true, priority: 1 },
-  'media-policy': { name: 'Policy & Regulation', enabled: true, priority: 1 },
-  'media-platforms': { name: 'Platforms & Distribution', enabled: true, priority: 1 },
-  'media-culture': { name: 'Culture & Entertainment', enabled: true, priority: 1 },
-  'media-tech': { name: 'Media Tech & AI', enabled: true, priority: 1 },
-  'media-audience': { name: 'Audience & Creator Economy', enabled: true, priority: 1 },
-  'media-regions': { name: 'Regional Media Watch', enabled: true, priority: 2 },
-  'social-velocity': { name: 'Story Velocity', enabled: true, priority: 2 },
-  monitors: { name: 'Topic Monitors', enabled: true, priority: 2 },
+  map: { name: '传播态势地图', enabled: true, priority: 1 },
+  'live-news': { name: '突发线索雷达', enabled: true, priority: 1 },
+  insights: { name: 'AI 编辑简报', enabled: true, priority: 1 },
+  'media-storyline': { name: '选题指挥板', enabled: true, priority: 1 },
+  'media-business-radar': { name: '传媒经营雷达', enabled: true, priority: 1 },
+  'media-business': { name: '商业化与广告', enabled: true, priority: 1 },
+  'media-policy': { name: '政策与版权', enabled: true, priority: 1 },
+  'media-platforms': { name: '平台与分发', enabled: true, priority: 1 },
+  'media-culture': { name: '文娱与热点', enabled: true, priority: 1 },
+  'media-tech': { name: '媒介技术与 AI', enabled: true, priority: 1 },
+  'media-audience': { name: '受众与创作者', enabled: true, priority: 1 },
 };
 
 const MEDIA_MAP_LAYERS: MapLayers = {
@@ -1044,9 +1042,9 @@ export const VARIANT_PANEL_OVERRIDES: Partial<Record<string, Partial<Record<stri
     insights:    { name: 'AI Market Insights' },
   },
   media: {
-    map:         { name: 'Story Geography Map' },
-    'live-news': { name: 'Breaking Story Radar' },
-    insights:    { name: 'AI Editorial Brief' },
+    map:         { name: '传播态势地图' },
+    'live-news': { name: '突发线索雷达' },
+    insights:    { name: 'AI 编辑简报' },
   },
   tech: {
     map:         { name: 'Global Tech Map' },
@@ -1202,13 +1200,13 @@ export const PANEL_CATEGORY_MAP: Record<string, { labelKey: string; panelKeys: s
 
   // Media variant
   mediaCoverage: {
-    labelKey: 'header.panelCatRegionalNews',
-    panelKeys: ['politics', 'media-business', 'media-policy', 'media-platforms', 'media-culture', 'media-tech', 'media-audience', 'media-regions'],
+    labelKey: 'header.panelCatMediaCoverage',
+    panelKeys: ['media-business', 'media-policy', 'media-platforms', 'media-culture', 'media-tech', 'media-audience'],
     variants: ['media'],
   },
   mediaWorkflow: {
-    labelKey: 'header.panelCatCore',
-    panelKeys: ['map', 'live-news', 'insights', 'social-velocity', 'monitors'],
+    labelKey: 'header.panelCatMediaOps',
+    panelKeys: ['map', 'live-news', 'insights', 'media-storyline', 'media-business-radar'],
     variants: ['media'],
   },
 
