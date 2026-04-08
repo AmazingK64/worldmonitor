@@ -3,7 +3,7 @@ import type { RuntimeSecretKey, RuntimeFeatureId } from './runtime-config';
 export const SIGNUP_URLS: Partial<Record<RuntimeSecretKey, string>> = {
   GROQ_API_KEY: 'https://console.groq.com/keys',
   OPENROUTER_API_KEY: 'https://openrouter.ai/settings/keys',
-  EXA_API_KEYS: 'https://dashboard.exa.ai/api-keys',
+  TAVILY_API_KEYS: 'https://app.tavily.com/home',
   BRAVE_API_KEYS: 'https://api-dashboard.search.brave.com/app/keys',
   SERPAPI_API_KEYS: 'https://serpapi.com/manage-api-key',
   FRED_API_KEY: 'https://fred.stlouisfed.org/docs/api/api_key.html',
@@ -40,7 +40,7 @@ export const MASKED_SENTINEL = '__WM_MASKED__';
 export const HUMAN_LABELS: Record<RuntimeSecretKey, string> = {
   GROQ_API_KEY: 'Groq API Key',
   OPENROUTER_API_KEY: 'OpenRouter API Key',
-  EXA_API_KEYS: 'Exa API Keys',
+  TAVILY_API_KEYS: 'Tavily API Keys',
   BRAVE_API_KEYS: 'Brave Search API Keys',
   SERPAPI_API_KEYS: 'SerpAPI Keys',
   FRED_API_KEY: 'FRED API Key',
@@ -88,7 +88,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
   {
     id: 'markets',
     label: 'Markets & Trade',
-    features: ['finnhubMarkets', 'stockNewsSearchExa', 'stockNewsSearchBrave', 'stockNewsSearchSerpApi', 'wtoTrade'],
+    features: ['finnhubMarkets', 'stockNewsSearchTavily', 'stockNewsSearchBrave', 'stockNewsSearchSerpApi', 'wtoTrade'],
   },
   {
     id: 'security',

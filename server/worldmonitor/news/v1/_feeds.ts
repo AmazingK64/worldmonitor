@@ -416,41 +416,66 @@ export const VARIANT_FEEDS: Record<string, Record<string, ServerFeed[]>> = {
   },
 
   media: {
-    mediaindustry: [
+    politics: [
+      { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+      { name: 'Reuters World', url: gn('site:reuters.com world') },
+      { name: 'AP News', url: gn('site:apnews.com') },
+      { name: 'Guardian World', url: 'https://www.theguardian.com/world/rss' },
+      { name: 'CNN World', url: gn('site:cnn.com world news when:1d') },
+    ],
+    'media-business': [
       { name: 'Digiday', url: 'https://www.digiday.com/feed/' },
+      { name: 'Adweek', url: 'https://www.adweek.com/feed/' },
       { name: 'Nieman Lab', url: 'https://www.niemanlab.org/feed/' },
       { name: 'Poynter', url: 'https://www.poynter.org/feed/' },
       { name: 'Columbia Journalism Review', url: 'https://www.cjr.org/feed/' },
-      { name: 'Adweek', url: 'https://www.adweek.com/feed/' },
-      { name: 'Axios Media', url: 'https://www.axios.com/media' },
+      { name: 'Reuters Media', url: gn('site:reuters.com media advertising publishing when:3d') },
+      { name: 'Media Moves', url: gn('(publishing OR newsroom OR media company OR advertising) deal OR layoffs OR strategy when:3d') },
     ],
-    entertainment: [
-      { name: 'Variety', url: 'https://variety.com/feed/' },
-      { name: 'Hollywood Reporter', url: 'https://www.hollywoodreporter.com/feed/' },
-      { name: 'Deadline', url: 'https://deadline.com/feed/' },
-      { name: 'Billboard', url: 'https://www.billboard.com-feed' },
-      { name: 'Screen Daily', url: 'https://www.screendaily.com/feed' },
+    'media-policy': [
+      { name: 'FCC News', url: 'https://www.fcc.gov/news-events/headlines/rss.xml' },
+      { name: 'Ofcom News', url: 'https://www.ofcom.org.uk/siteassets/resources/documents/news-centre/rss-news.xml' },
+      { name: 'Platform Regulation', url: gn('(media regulation OR platform regulation OR broadcast law OR press freedom) when:7d') },
+      { name: 'Copyright & AI', url: gn('(copyright AND AI AND publishers) OR (news publishers AI licensing) when:7d') },
+      { name: 'Press Freedom', url: gn('("press freedom" OR "journalism law" OR "publisher rights") when:7d') },
     ],
-    broadcasting: [
+    'media-platforms': [
       { name: 'Broadcasting & Cable', url: 'https://www.nexttv.com/rss.xml' },
       { name: 'TV News Check', url: 'https://tvnewscheck.com/rss/' },
       { name: 'Rapid TV News', url: 'https://www.rapidtvnews.com/feed' },
+      { name: 'Social Platforms', url: gn('(YouTube OR TikTok OR Instagram OR Meta OR X platform) creator OR media OR algorithm when:3d') },
+      { name: 'Streaming', url: gn('(Netflix OR Disney OR streaming) media strategy OR subscribers when:3d') },
+      { name: 'Distribution Strategy', url: gn('(audience distribution OR publisher traffic OR referral traffic OR news algorithm) when:3d') },
     ],
-    digitalmedia: [
+    'media-culture': [
+      { name: 'Variety', url: 'https://variety.com/feed/' },
+      { name: 'Hollywood Reporter', url: 'https://www.hollywoodreporter.com/feed/' },
+      { name: 'Deadline', url: 'https://deadline.com/feed/' },
+      { name: 'Billboard', url: 'https://www.billboard.com/feed/' },
+      { name: 'Screen Daily', url: 'https://www.screendaily.com/feed' },
+      { name: 'Entertainment Strategy', url: gn('(film industry OR tv industry OR streaming industry) strategy when:3d') },
+    ],
+    'media-tech': [
+      { name: 'TechCrunch', url: 'https://techcrunch.com/feed/' },
+      { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml' },
+      { name: 'Axios Media', url: gn('site:axios.com media when:3d') },
+      { name: 'AI in Media', url: gn('(AI in newsroom OR AI in media OR publisher AI workflow) when:7d') },
+      { name: 'Media Tools', url: gn('(journalism tools OR publishing platform OR CMS for media) when:7d') },
+    ],
+    'media-audience': [
       { name: 'The Drum', url: 'https://www.thedrum.com/rss' },
       { name: 'MediaPost', url: 'https://www.mediapost.com/rss/' },
-      { name: 'NetNews', url: 'https://www.netnews.com/feed' },
-      { name: 'TVB Europe', url: 'https://www.tvbeurope.com/feed/' },
-    ],
-    publishing: [
-      { name: 'Publishing Perspective', url: 'https://publishingperspectives.com/feed/' },
-      { name: 'Books & Publishing', url: 'https://booksandpublishing.com.au/feed/' },
-      { name: 'Shelf Awareness', url: 'https://www.shelf-awareness.com/feed/' },
-    ],
-    marketing: [
-      { name: 'Marketing Week', url: 'https://www.marketingweek.com/feed/' },
       { name: 'Campaign', url: 'https://www.campaignlive.com/rss' },
-      { name: 'Contagious', url: 'https://www.contagious.com/rss' },
+      { name: 'Marketing Week', url: 'https://www.marketingweek.com/feed/' },
+      { name: 'Creator Economy', url: gn('(creator economy OR creator business OR influencer marketing) when:3d') },
+      { name: 'Audience Trends', url: gn('(audience trends OR reader engagement OR subscriber growth OR media consumption) when:3d') },
+      { name: 'Newsletters & Podcasts', url: gn('(newsletter business OR podcast industry OR audio media) when:7d') },
+    ],
+    'media-regions': [
+      { name: 'Asia Media', url: gn('(Asia media industry OR Asian publishers OR Asia newsroom) when:7d') },
+      { name: 'Europe Media', url: gn('(Europe media industry OR European publishers OR Europe newsroom) when:7d') },
+      { name: 'US Media', url: gn('(US media industry OR American publishers OR newsroom strategy) when:7d') },
+      { name: 'MENA Media', url: gn('(MENA media industry OR Middle East publishers OR GCC media) when:7d') },
     ],
   },
 };

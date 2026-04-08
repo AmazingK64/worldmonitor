@@ -11,7 +11,7 @@ const originalFetch = globalThis.fetch;
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
-  delete process.env.EXA_API_KEYS;
+  delete process.env.TAVILY_API_KEYS;
   delete process.env.BRAVE_API_KEYS;
   delete process.env.SERPAPI_API_KEYS;
   resetStockNewsSearchStateForTests();
@@ -25,20 +25,21 @@ describe('stock news search query', () => {
 });
 
 describe('searchRecentStockHeadlines', () => {
-  it('uses Exa first when configured', async () => {
-    process.env.EXA_API_KEYS = 'exa-key-1';
+  it('uses Tavily first when configured', async () => {
+    process.env.TAVILY_API_KEYS = 'tavily-key-1';
     const requested: string[] = [];
 
-    globalThis.fetch = (async (input: RequestInfo | URL) => {
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
       requested.push(url);
-      if (url === 'https://api.exa.ai/search') {
+      if (url === 'https://api.tavily.com/search') {
+        assert.equal(init?.headers && (init.headers as Record<string, string>).Authorization, 'Bearer tavily-key-1');
         return new Response(JSON.stringify({
           results: [
             {
               title: 'Apple expands buyback after strong quarter',
               url: 'https://example.com/apple-buyback',
-              publishedDate: '2026-03-08T12:00:00.000Z',
+              published_date: '2026-03-08T12:00:00.000Z',
             },
           ],
         }), { status: 200 });
@@ -48,21 +49,21 @@ describe('searchRecentStockHeadlines', () => {
 
     const result = await searchRecentStockHeadlines('AAPL', 'Apple', 5);
 
-    assert.equal(result.provider, 'exa');
+    assert.equal(result.provider, 'tavily');
     assert.equal(result.headlines.length, 1);
     assert.equal(result.headlines[0]?.link, 'https://example.com/apple-buyback');
-    assert.deepEqual(requested, ['https://api.exa.ai/search']);
+    assert.deepEqual(requested, ['https://api.tavily.com/search']);
   });
 
-  it('falls back from Exa to Brave before using RSS', async () => {
-    process.env.EXA_API_KEYS = 'exa-key-1';
+  it('falls back from Tavily to Brave before using RSS', async () => {
+    process.env.TAVILY_API_KEYS = 'tavily-key-1';
     process.env.BRAVE_API_KEYS = 'brave-key-1';
     const requested: string[] = [];
 
     globalThis.fetch = (async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
       requested.push(url);
-      if (url === 'https://api.exa.ai/search') {
+      if (url === 'https://api.tavily.com/search') {
         return new Response(JSON.stringify({ error: 'rate limit' }), { status: 429 });
       }
       if (url.startsWith('https://api.search.brave.com/res/v1/web/search?')) {
@@ -88,7 +89,7 @@ describe('searchRecentStockHeadlines', () => {
     assert.equal(result.headlines.length, 1);
     assert.equal(result.headlines[0]?.link, 'https://example.com/apple-supply-chain');
     assert.equal(requested.length, 2);
-    assert.equal(requested[0], 'https://api.exa.ai/search');
+    assert.equal(requested[0], 'https://api.tavily.com/search');
     assert.match(requested[1] || '', /^https:\/\/api\.search\.brave\.com\/res\/v1\/web\/search\?/);
   });
 

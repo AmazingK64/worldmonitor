@@ -3,7 +3,7 @@ import { getRpcBaseUrl } from '@/services/rpc-client';
 import { NewsServiceClient } from '@/generated/client/worldmonitor/news/v1/service_client';
 import { buildSummaryCacheKey } from '@/utils/summary-cache-key';
 import { isFeatureAvailable } from './runtime-config';
-import type { SummarizationProvider, SummarizationResult } from './summarization';
+import { generateSummary, type SummarizationProvider, type SummarizationResult } from './summarization';
 
 interface ApiProviderDef {
   featureId: 'aiOllama' | 'aiGroq' | 'aiOpenRouter';
@@ -68,6 +68,27 @@ export async function generateEventBrief(
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') throw error;
     }
+  }
+
+  // Match the regular summary UX: if no provider-backed event brief is available,
+  // fall back to the in-browser summarizer instead of surfacing a hard failure.
+  const browserFallbackInput = cleaned.length >= 2
+    ? cleaned
+    : [
+      cleaned[0]!,
+      geoContext.trim() || `Variant: ${SITE_VARIANT}. Generate a concise event brief from the available popup details.`,
+    ];
+
+  try {
+    return await generateSummary(
+      browserFallbackInput,
+      undefined,
+      geoContext,
+      lang,
+      { skipCloudProviders: true },
+    );
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error;
   }
 
   return null;

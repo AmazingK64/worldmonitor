@@ -258,6 +258,109 @@
 
 ---
 
+## 第三波
+
+### 1. 补充传媒 RSS、接入 Tavily 新闻搜索并修复 media 面板不可用
+
+#### 用户提问
+
+添加媒体行业相关的 RSS Feeds  
+利用 Tavily 实现行业新闻搜索，配置为新闻搜索 provider，参考 `stock-news-search.ts` 的 provider chain 模式
+
+#### AI 处理摘要
+
+- 检查了现有 `stock-news-search.ts` 的 provider chain，实现从 `Exa` 切换到 `Tavily -> Brave -> SerpAPI -> Google News RSS`。
+- 补齐了媒体行业 RSS 源，并将服务端 `media` 变体 feeds 与前端媒体面板分类键对齐。
+- 发现媒体分类面板“不可用”的直接原因是前后端使用的 media 分类键不一致，导致 digest 命中失败。
+- 重启了 `media` 开发环境以加载新配置。
+
+#### 决策
+
+- 使用 `TAVILY_API_KEYS` 替代 `EXA_API_KEYS` 作为股票/行业新闻搜索的首位 provider。
+- 统一 media 变体服务端/前端分类键为：
+  - `media-business`
+  - `media-policy`
+  - `media-platforms`
+  - `media-culture`
+  - `media-tech`
+  - `media-audience`
+  - `media-regions`
+
+#### 实际动作
+
+- 更新 `server/worldmonitor/market/v1/stock-news-search.ts`
+- 更新 `src/services/runtime-config.ts`
+- 更新 `src/services/settings-constants.ts`
+- 更新 `src-tauri/sidecar/local-api-server.mjs`
+- 更新 `server/worldmonitor/news/v1/_feeds.ts`
+- 更新 `src/config/feeds.ts`
+- 更新 `tests/stock-news-search.test.mts`
+- 新增 `tests/media-feeds.test.mts`
+- 重启 `yarn dev:media`
+
+#### 涉及文件
+
+- `server/worldmonitor/market/v1/stock-news-search.ts`
+- `src/services/runtime-config.ts`
+- `src/services/settings-constants.ts`
+- `src-tauri/sidecar/local-api-server.mjs`
+- `server/worldmonitor/news/v1/_feeds.ts`
+- `src/config/feeds.ts`
+- `tests/stock-news-search.test.mts`
+- `tests/media-feeds.test.mts`
+- `PROMPT_LOG.md`
+
+#### 验证结果
+
+- `npx tsx --test tests/stock-news-search.test.mts tests/media-feeds.test.mts` 通过。
+- `npx tsc --noEmit` 通过。
+- `media` 开发环境已重新启动到 `http://localhost:3000/`。
+
+#### 下一步
+
+- 继续验证媒体详情弹窗、地图 popup 和 Insights 细节链路在无云端 key 时的 AI 降级行为。
+
+---
+
+### 2. 修复“点击详情后 AI 解读不可用”
+
+#### 用户提问
+
+补充 `PROMPT_LOG.md`，现在点击详情都里面有“当前无法生成 AI 解读”。
+
+#### AI 处理摘要
+
+- 定位到报错不是媒体 RSS 本身，而是详情解读使用的 `generateEventBrief()`。
+- 该函数此前只尝试云端 provider（`Ollama / Groq / OpenRouter`），没有像普通摘要一样走浏览器本地 fallback。
+- 在当前无可用云端 AI key 的情况下，详情弹层会稳定返回 `null`，前端显示“当前无法生成 AI 解读”。
+- 已为 `generateEventBrief()` 增加浏览器本地摘要降级，并兼容只有 1 条输入时的最小输入构造。
+
+#### 决策
+
+- 保持 provider-backed event brief 逻辑不变。
+- 在 provider 全部不可用后，回退到 `generateSummary(..., { skipCloudProviders: true })`，优先使用浏览器本地模型，而不是直接展示失败文案。
+
+#### 实际动作
+
+- 更新 `src/services/event-brief.ts`
+- 更新 `PROMPT_LOG.md`
+
+#### 涉及文件
+
+- `src/services/event-brief.ts`
+- `PROMPT_LOG.md`
+
+#### 验证结果
+
+- 逻辑上已补齐 event brief 的浏览器 fallback 链路。
+- 待刷新当前 `media` 页面后验证详情弹层是否恢复生成。
+
+#### 下一步
+
+- 执行类型检查并在运行中的 `media` 页面上手动验证详情弹层结果。
+
+---
+
 ### 5. 继续下一步：处理分享命名、media 首屏识别和中文首页文案
 
 #### 用户提问
