@@ -90,7 +90,11 @@ function generateDescription(
     parts.push(typeDescriptions[type]);
   }
 
-  return `${variantMeta.siteName} ${parts.join('. ')}. Free, open-source geopolitical intelligence.`;
+  const suffix = SITE_VARIANT === 'media'
+    ? 'Focused on editorial workflows, story discovery, and media intelligence.'
+    : 'Free, open-source geopolitical intelligence.';
+
+  return `${variantMeta.siteName} ${parts.join('. ')}. ${suffix}`;
 }
 
 function setMetaTag(property: string, content: string): void {

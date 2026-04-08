@@ -11,6 +11,8 @@ import {
   getFilteredOptionalChannels,
   getFilteredChannelRegions,
 } from '@/components/LiveNewsPanel';
+import { SITE_VARIANT } from '@/config/variant';
+import { VARIANT_META } from '@/config/variant-meta';
 import { t } from '@/services/i18n';
 import { escapeHtml } from '@/utils/sanitize';
 import { toApiUrl } from '@/services/runtime';
@@ -98,7 +100,8 @@ export async function initLiveChannelsWindow(containerEl?: HTMLElement): Promise
   }
 
   if (!containerEl) {
-    document.title = `${t('components.liveNews.manage') ?? 'Channel management'} - World Monitor`;
+    const variantMeta = VARIANT_META[SITE_VARIANT] ?? VARIANT_META.full;
+    document.title = `${t('components.liveNews.manage') ?? 'Channel management'} - ${variantMeta.siteName}`;
   }
 
   channels = loadChannelsFromStorage();

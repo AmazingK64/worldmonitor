@@ -187,6 +187,19 @@ Runs automatically before `git push`:
 - New data sources MUST have bootstrap hydration wired in `api/bootstrap.js`
 - Redis seed scripts MUST write `seed-meta:<key>` for health monitoring
 
+## AI Collaboration Rule
+
+- Every user prompt/request in this fork MUST be summarized and appended to `PROMPT_LOG.md`.
+- Each log entry should include:
+  - the original user prompt or a near-verbatim version
+  - a concise summary of the AI response
+  - decisions made
+  - actions taken
+  - files changed
+  - verification status
+  - next step when applicable
+- Update `PROMPT_LOG.md` as part of the same task, not as a later cleanup step.
+
 ## External References
 
 - [Architecture (system reference)](ARCHITECTURE.md)
