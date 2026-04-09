@@ -16,6 +16,125 @@
 
 ---
 
+### 17. 修复 Tavily 媒体新闻面板空数据，并压缩 AI 媒体预测输入
+
+#### 用户提问
+
+1、tavily 媒体新闻面板没有数据，修改好  
+2、AI 媒体新闻预测也没有数据，需要压缩输入新闻数并优化成更短的预测模板
+
+#### AI 处理摘要
+
+- 确认 `list-media-tavily-news` 接口本身已有数据，问题集中在前端面板稳态和预测链路过重。
+- 为 `MediaTavilyNewsPanel` 增加自动重试逻辑与手动“重新加载”入口，避免首次空返回直接停留在空面板。
+- 将 Tavily 返回的摘要在服务端压缩清洗，减少噪音片段和超长内容。
+- 将 `MediaNewsForecastPanel` 的输入从 6-10 条压缩到 3 条高信号新闻，并缩短 `geoContext` 模板。
+- 在 `generateMediaNewsForecast()` 中加入规则化 fallback 文案，AI 超时或失败时不再出现空预测面板。
+
+#### 决策
+
+- 不继续扩大模型上下文，而是通过减少输入新闻数量和缩短模板来提升 `MiniMax-M2.5-highspeed` 的成功率。
+- 即使 AI 预测链失败，也要返回一个可读的 fallback 预测，保证面板始终有内容。
+- 保留服务端 Tavily 接口不变，只对摘要清洗和前端加载稳态做修正。
+
+#### 实际动作
+
+- 更新 `server/worldmonitor/news/v1/list-media-tavily-news.ts`
+- 更新 `src/services/media-tavily-news.ts`
+- 更新 `src/components/MediaTavilyNewsPanel.ts`
+- 更新 `src/components/MediaNewsForecastPanel.ts`
+- 更新 `PROMPT_LOG.md`
+
+#### 涉及文件
+
+- `server/worldmonitor/news/v1/list-media-tavily-news.ts`
+- `src/services/media-tavily-news.ts`
+- `src/components/MediaTavilyNewsPanel.ts`
+- `src/components/MediaNewsForecastPanel.ts`
+- `PROMPT_LOG.md`
+
+#### 验证结果
+
+- `npx tsc --noEmit` 通过。
+- `media` 开发服务已重启并继续监听 `http://localhost:3000/`。
+- `http://localhost:3000/api/news/v1/list-media-tavily-news?limit=3&days=7` 持续返回 `provider: "tavily"` 的结果。
+- 预测链路的输入规模已缩短，且失败时已具备 fallback 文案，不再依赖 AI 成功才有内容。
+
+#### 下一步
+
+- 若还要继续提升预测质量，可进一步过滤 Tavily 来源质量，优先保留 TechCrunch、Variety、Deadline、Hollywood Reporter 等媒体行业源。
+
+---
+
+### 16. 新增 Tavily 媒体新闻面板与 AI 媒体预测面板
+
+#### 用户提问
+
+再加入两个新的面板展示 Tavily 获取到的媒体行业新闻面板，点击后也可以进行 AI 分析和 AI 分析媒体新闻预测面板
+
+#### AI 处理摘要
+
+- 为媒体变体新增一个专门的 Tavily 媒体行业新闻接口 `list-media-tavily-news`，从 Tavily 新闻搜索中拉取最近 7 天的媒体行业相关新闻，并走服务端缓存。
+- 新增 `MediaTavilyNewsPanel`，直接展示 Tavily 获取到的媒体新闻列表；点击单条新闻的 `✨` 按钮后，会在条目内展开 AI 解读。
+- 新增 `MediaNewsForecastPanel`，基于同一批 Tavily 媒体新闻生成 24-72 小时的媒体行业预测。
+- 为预测场景新增 `media-forecast` 提示词模式，避免直接复用通用 `analysis` 模式；并为 `MiniMax-M2.5-highspeed` 增加自动回退到 `MiniMax-M2.5` 的兜底逻辑。
+- 将两个新面板接入媒体变体默认布局、面板注册表和首页 refocus 逻辑。
+
+#### 决策
+
+- 不把股票新闻搜索接口硬复用到媒体面板，而是单独新增媒体 Tavily 新闻接口，避免语义和缓存键混在一起。
+- 保持用户要求的 `MiniMax-M2.5-highspeed` 为首选模型；当高速模型只输出 reasoning 或结果不完整时，再自动回退到 `MiniMax-M2.5`。
+- 对媒体预测单独设计 `media-forecast` 模式，使输出更贴近 newsroom / distribution / advertiser / audience 场景。
+
+#### 实际动作
+
+- 新增 `server/worldmonitor/news/v1/list-media-tavily-news.ts`
+- 更新 `api/news/v1/[rpc].ts`
+- 更新 `vite.config.ts`
+- 新增 `src/services/media-tavily-news.ts`
+- 新增 `src/components/MediaTavilyNewsPanel.ts`
+- 新增 `src/components/MediaNewsForecastPanel.ts`
+- 更新 `server/worldmonitor/news/v1/_shared.ts`
+- 更新 `server/worldmonitor/news/v1/summarize-article.ts`
+- 更新 `src/components/index.ts`
+- 更新 `src/config/panels.ts`
+- 更新 `src/app/panel-layout.ts`
+- 更新 `src/App.ts`
+- 更新 `server/gateway.ts`
+- 更新 `PROMPT_LOG.md`
+
+#### 涉及文件
+
+- `server/worldmonitor/news/v1/list-media-tavily-news.ts`
+- `api/news/v1/[rpc].ts`
+- `vite.config.ts`
+- `src/services/media-tavily-news.ts`
+- `src/components/MediaTavilyNewsPanel.ts`
+- `src/components/MediaNewsForecastPanel.ts`
+- `server/worldmonitor/news/v1/_shared.ts`
+- `server/worldmonitor/news/v1/summarize-article.ts`
+- `src/components/index.ts`
+- `src/config/panels.ts`
+- `src/app/panel-layout.ts`
+- `src/App.ts`
+- `server/gateway.ts`
+- `PROMPT_LOG.md`
+
+#### 验证结果
+
+- `npx tsc --noEmit` 通过。
+- `media` 开发服务已重启并继续监听 `http://localhost:3000/`。
+- 直接调用 `http://localhost:3000/api/news/v1/list-media-tavily-news?limit=5&days=7` 时，已返回 `provider: "tavily"` 的媒体行业新闻列表。
+- 新增面板已接入媒体变体默认布局和首页 refocus 逻辑。
+- `media-forecast` 模式已能走摘要链，但在 `MiniMax-M2.5-highspeed` 回退到 `MiniMax-M2.5` 时，仍存在偶发超时风险。
+
+#### 下一步
+
+- 若后续需要进一步提高 `AI 媒体新闻预测` 面板稳定性，可继续压缩输入 headline 数量，或针对预测场景优先使用更稳定的 provider。
+- 如果要把这套媒体 Tavily 新闻接口推广到其他变体，可再抽象成通用行业新闻搜索面板。
+
+---
+
 ### 15. 调整详情弹窗、清理 Pro/社区入口，并接通 Tavily 与 MiniMax 高速模型
 
 #### 用户提问

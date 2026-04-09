@@ -30,16 +30,21 @@ export function hasReasoningPreamble(text: string): boolean {
   return TASK_NARRATION.test(trimmed) || PROMPT_ECHO.test(trimmed);
 }
 
+function isCompleteForecast(text: string): boolean {
+  return /[。！？.!?]$/.test(text.trim());
+}
+
 function getSummaryMaxTokens(provider: string, model: string, mode: string): number {
   const isMiniMax = provider === 'ollama' && /^MiniMax-/i.test(model);
   if (!isMiniMax) {
-    return mode === 'event-brief' ? 180 : 100;
+    return mode === 'event-brief' ? 180 : mode === 'media-forecast' ? 220 : 100;
   }
 
   // MiniMax reasoning-capable models often emit a hidden/visible thinking preamble
   // before the final answer. Give them more completion budget so the actual summary
   // arrives after stripping reasoning tags.
   if (mode === 'event-brief') return 320;
+  if (mode === 'media-forecast') return 360;
   if (mode === 'analysis') return 240;
   return 240;
 }
@@ -160,13 +165,18 @@ export async function summarizeArticle(
           const rawText = typeof message?.content === 'string' ? message.content.trim() : '';
           const rawContent = stripThinkingTags(rawText);
 
-          if (['brief', 'analysis', 'event-brief'].includes(mode) && rawContent.length < 20) {
+          if (['brief', 'analysis', 'event-brief', 'media-forecast'].includes(mode) && rawContent.length < 20) {
             console.warn(`[SummarizeArticle:${provider}] Output too short after stripping (${rawContent.length} chars), rejecting`);
             return null;
           }
 
-          if (['brief', 'analysis', 'event-brief'].includes(mode) && hasReasoningPreamble(rawContent)) {
+          if (['brief', 'analysis', 'event-brief', 'media-forecast'].includes(mode) && hasReasoningPreamble(rawContent)) {
             console.warn(`[SummarizeArticle:${provider}] Reasoning preamble detected, rejecting`);
+            return null;
+          }
+
+          if (mode === 'media-forecast' && !isCompleteForecast(rawContent)) {
+            console.warn(`[SummarizeArticle:${provider}] Forecast output incomplete, rejecting`);
             return null;
           }
 

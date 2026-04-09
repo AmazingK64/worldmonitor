@@ -72,6 +72,8 @@ import {
   SocialVelocityPanel,
   MediaStorylinePanel,
   MediaBusinessRadarPanel,
+  MediaTavilyNewsPanel,
+  MediaNewsForecastPanel,
 } from '@/components';
 import { SatelliteFiresPanel } from '@/components/SatelliteFiresPanel';
 import { focusInvestmentOnMap } from '@/services/investments-focus';
@@ -331,7 +333,7 @@ export class PanelLayoutManager implements AppModule {
                ${vTarget('media')}
                title="Media${SITE_VARIANT === 'media' ? ` ${t('common.currentVariant')}` : ''}">
               <span class="variant-icon">📰</span>
-              <span class="variant-label">Media</span>
+              <span class="variant-label">媒体</span>
             </a>
             <span class="variant-divider"></span>
             <a href="${vHref('commodity', 'https://commodity.worldmonitor.app')}"
@@ -799,6 +801,8 @@ export class PanelLayoutManager implements AppModule {
     this.createPanel('social-velocity', () => new SocialVelocityPanel());
     this.createPanel('media-storyline', () => new MediaStorylinePanel());
     this.createPanel('media-business-radar', () => new MediaBusinessRadarPanel());
+    this.createPanel('media-tavily-news', () => new MediaTavilyNewsPanel());
+    this.createPanel('media-news-forecast', () => new MediaNewsForecastPanel());
 
     this.lazyPanel('displacement', () =>
       import('@/components/DisplacementPanel').then(m => {
@@ -1638,12 +1642,12 @@ export class PanelLayoutManager implements AppModule {
       dragStarted = false;
       startX = e.clientX;
       startY = e.clientY;
-      
+
       // Calculate offset within the element for smooth dragging
       const rect = el.getBoundingClientRect();
       dragOffsetX = e.clientX - rect.left;
       dragOffsetY = e.clientY - rect.top;
-      
+
       e.preventDefault();
     };
 
@@ -1658,12 +1662,12 @@ export class PanelLayoutManager implements AppModule {
       ghost.style.opacity = '0.8';
       ghost.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.3)';
       ghost.style.transform = 'scale(1.02)';
-      
+
       // Copy dimensions from original
       const rect = el.getBoundingClientRect();
       ghost.style.width = rect.width + 'px';
       ghost.style.height = rect.height + 'px';
-      
+
       document.body.appendChild(ghost);
       return ghost;
     };
@@ -1794,7 +1798,7 @@ export class PanelLayoutManager implements AppModule {
         const dy = Math.abs(e.clientY - startY);
         if (dx < DRAG_THRESHOLD && dy < DRAG_THRESHOLD) return;
         dragStarted = true;
-        
+
         // Initialize drag visualization
         el.classList.add('dragging-source');
         originalParent = el.parentElement as HTMLElement;
@@ -1860,11 +1864,11 @@ export class PanelLayoutManager implements AppModule {
       if (!isDragging) return;
       isDragging = false;
       if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
-      
+
       if (dragStarted) {
         // Find final drop position using most recent cursor coords
         const dropPos = findDropPosition(lastX, lastY);
-        
+
         if (dropPos) {
           const { grid, panel } = dropPos;
 
@@ -1874,7 +1878,7 @@ export class PanelLayoutManager implements AppModule {
             grid.appendChild(el);
           }
         }
-        
+
         // Clean up drag visualization
         el.classList.remove('dragging-source');
         if (ghostEl) {
@@ -1893,7 +1897,7 @@ export class PanelLayoutManager implements AppModule {
           lastTargetPanel.classList.remove('panel-drop-target');
           lastTargetPanel = null;
         }
-        
+
         // Update status
         const isInBottom = !!el.closest('.map-bottom-grid');
         if (isInBottom) {

@@ -492,10 +492,10 @@ export class App {
         localStorage.setItem(HAPPY_PANEL_FIX_KEY, 'done');
       }
 
-      const MEDIA_HOME_REFOCUS_KEY = 'worldmonitor-media-home-refocus-v1';
+      const MEDIA_HOME_REFOCUS_KEY = 'worldmonitor-media-home-refocus-v2';
       if (SITE_VARIANT === 'media' && !localStorage.getItem(MEDIA_HOME_REFOCUS_KEY)) {
         const retiredDefaultKeys = ['politics', 'media-regions', 'social-velocity', 'monitors'];
-        const promotedKeys = ['media-storyline', 'media-business-radar'];
+        const promotedKeys = ['media-storyline', 'media-business-radar', 'media-tavily-news', 'media-news-forecast'];
         let migrated = false;
         for (const key of retiredDefaultKeys) {
           if (panelSettings[key]?.enabled) {

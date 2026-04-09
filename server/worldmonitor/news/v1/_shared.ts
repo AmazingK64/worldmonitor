@@ -128,6 +128,20 @@ Rules:
 - Use only the provided facts and context; if uncertain, use cautious wording like "likely" or "possibly"
 - No bullet points, no numbered list, no meta-commentary, no hype${mediaInstruction}${zhInstruction}${langInstruction}`;
     userPrompt = `Interpret this event in one short paragraph:\n${headlineText}${intelSection}`;
+  } else if (opts.mode === 'media-forecast') {
+    const zhInstruction = opts.lang === 'zh'
+      ? '\n- Output in Simplified Chinese.\n- Write one short paragraph between 80 and 180 Chinese characters.'
+      : '\n- Write one short paragraph between 60 and 110 words.';
+    systemPrompt = `${dateContext}
+
+Generate a short forward-looking forecast for media industry operators.
+Rules:
+- Treat the headlines below as related signals shaping the next 24-72 hours
+- Focus on newsroom priorities, platform distribution shifts, audience attention, advertiser sentiment, creator ecosystem changes, and reputational risk
+- Start with the most likely near-term shift, then explain why it matters
+- Use cautious forecasting language such as "likely", "may", or "could" when appropriate
+- No bullet points, no numbered list, no meta-commentary, no hype${zhInstruction}${langInstruction}`;
+    userPrompt = `Forecast the likely media-industry implications of these signals over the next 24-72 hours:\n${headlineText}${intelSection}`;
   } else {
     systemPrompt = isTechVariant
       ? `${dateContext}\n\nPick the most important tech headline and summarize it in 2 concise sentences (under 60 words). Each headline is a separate story - NEVER merge facts from different headlines. Focus on startups, AI, funding, products. Ignore politics unless directly about tech regulation.${langInstruction}`

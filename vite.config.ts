@@ -195,6 +195,7 @@ function sebufApiPlugin(): Plugin {
       supplyChainServerMod, supplyChainHandlerMod,
       naturalServerMod, naturalHandlerMod,
       resilienceServerMod, resilienceHandlerMod,
+      mediaTavilyNewsMod,
     ] = await Promise.all([
         import('./server/router'),
         import('./server/cors'),
@@ -245,6 +246,7 @@ function sebufApiPlugin(): Plugin {
         import('./server/worldmonitor/natural/v1/handler'),
         import('./src/generated/server/worldmonitor/resilience/v1/service_server'),
         import('./server/worldmonitor/resilience/v1/handler'),
+        import('./server/worldmonitor/news/v1/list-media-tavily-news'),
       ]);
 
     const serverOptions = { onError: errorMod.mapErrorToResponse };
@@ -272,6 +274,18 @@ function sebufApiPlugin(): Plugin {
       ...supplyChainServerMod.createSupplyChainServiceRoutes(supplyChainHandlerMod.supplyChainHandler, serverOptions),
       ...naturalServerMod.createNaturalServiceRoutes(naturalHandlerMod.naturalHandler, serverOptions),
       ...resilienceServerMod.createResilienceServiceRoutes(resilienceHandlerMod.resilienceHandler, serverOptions),
+      {
+        method: 'GET',
+        path: '/api/news/v1/list-media-tavily-news',
+        handler: async (req: Request) => {
+          const url = new URL(req.url);
+          const result = await mediaTavilyNewsMod.listMediaTavilyNews(url);
+          return new Response(JSON.stringify(result), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        },
+      },
     ];
     cachedCorsMod = corsMod;
     return routerMod.createRouter(allRoutes);

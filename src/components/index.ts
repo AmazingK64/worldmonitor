@@ -85,4 +85,6 @@ export * from './DiseaseOutbreaksPanel';
 export * from './SocialVelocityPanel';
 export * from './MediaStorylinePanel';
 export * from './MediaBusinessRadarPanel';
+export * from './MediaTavilyNewsPanel';
+export * from './MediaNewsForecastPanel';
 export * from './ResilienceWidget';

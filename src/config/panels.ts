@@ -590,6 +590,8 @@ const MEDIA_PANELS: Record<string, PanelConfig> = {
   insights: { name: 'AI 编辑简报', enabled: true, priority: 1 },
   'media-storyline': { name: '选题指挥板', enabled: true, priority: 1 },
   'media-business-radar': { name: '传媒经营雷达', enabled: true, priority: 1 },
+  'media-tavily-news': { name: 'Tavily 媒体新闻', enabled: true, priority: 1 },
+  'media-news-forecast': { name: 'AI 媒体新闻预测', enabled: true, priority: 1 },
   'media-business': { name: '商业化与广告', enabled: true, priority: 1 },
   'media-policy': { name: '政策与版权', enabled: true, priority: 1 },
   'media-platforms': { name: '平台与分发', enabled: true, priority: 1 },
@@ -1206,7 +1208,7 @@ export const PANEL_CATEGORY_MAP: Record<string, { labelKey: string; panelKeys: s
   },
   mediaWorkflow: {
     labelKey: 'header.panelCatMediaOps',
-    panelKeys: ['map', 'live-news', 'insights', 'media-storyline', 'media-business-radar'],
+    panelKeys: ['map', 'live-news', 'insights', 'media-storyline', 'media-business-radar', 'media-tavily-news', 'media-news-forecast'],
     variants: ['media'],
   },
 
