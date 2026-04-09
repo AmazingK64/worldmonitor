@@ -30,6 +30,27 @@ export function hasReasoningPreamble(text: string): boolean {
   return TASK_NARRATION.test(trimmed) || PROMPT_ECHO.test(trimmed);
 }
 
+function getSummaryMaxTokens(provider: string, model: string, mode: string): number {
+  const isMiniMax = provider === 'ollama' && /^MiniMax-/i.test(model);
+  if (!isMiniMax) {
+    return mode === 'event-brief' ? 180 : 100;
+  }
+
+  // MiniMax reasoning-capable models often emit a hidden/visible thinking preamble
+  // before the final answer. Give them more completion budget so the actual summary
+  // arrives after stripping reasoning tags.
+  if (mode === 'event-brief') return 320;
+  if (mode === 'analysis') return 240;
+  return 240;
+}
+
+function getFallbackModel(provider: string, model: string): string | null {
+  if (provider === 'ollama' && model === 'MiniMax-M2.5-highspeed') {
+    return 'MiniMax-M2.5';
+  }
+  return null;
+}
+
 // ======================================================================
 // SummarizeArticle: Multi-provider LLM summarization with Redis caching
 // Ported from api/_summarize-handler.js
@@ -109,6 +130,49 @@ export async function summarizeArticle(
       cacheKey,
       CACHE_TTL_SECONDS,
       async () => {
+        const summarizeWithModel = async (activeModel: string): Promise<{ summary: string; model: string; tokens: number } | null> => {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { ...providerHeaders, 'User-Agent': CHROME_UA },
+            body: JSON.stringify({
+              model: activeModel,
+              messages: [
+                { role: 'system', content: effectiveSystemPrompt },
+                { role: 'user', content: userPrompt },
+              ],
+              temperature: 0.3,
+              max_tokens: getSummaryMaxTokens(provider, activeModel, mode),
+              top_p: 0.9,
+              ...extraBody,
+            }),
+            signal: AbortSignal.timeout(25_000),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`[SummarizeArticle:${provider}] API error:`, response.status, errorText);
+            throw new Error(response.status === 429 ? 'Rate limited' : `${provider} API error`);
+          }
+
+          const data = await response.json() as any;
+          const tokens = (data.usage?.total_tokens as number) || 0;
+          const message = data.choices?.[0]?.message;
+          const rawText = typeof message?.content === 'string' ? message.content.trim() : '';
+          const rawContent = stripThinkingTags(rawText);
+
+          if (['brief', 'analysis', 'event-brief'].includes(mode) && rawContent.length < 20) {
+            console.warn(`[SummarizeArticle:${provider}] Output too short after stripping (${rawContent.length} chars), rejecting`);
+            return null;
+          }
+
+          if (['brief', 'analysis', 'event-brief'].includes(mode) && hasReasoningPreamble(rawContent)) {
+            console.warn(`[SummarizeArticle:${provider}] Reasoning preamble detected, rejecting`);
+            return null;
+          }
+
+          return rawContent ? { summary: rawContent, model: activeModel, tokens } : null;
+        };
+
         // Health gate inside fetcher — only runs on cache miss
         if (!(await isProviderAvailable(apiUrl))) return null;
         // Full injection sanitization applied at prompt-build time only.
@@ -128,47 +192,14 @@ export async function summarizeArticle(
         const effectiveSystemPrompt = sanitizedAppend
           ? `${systemPrompt}\n\n---\n\n${sanitizedAppend}`
           : systemPrompt;
+        const primary = await summarizeWithModel(model);
+        if (primary) return primary;
 
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { ...providerHeaders, 'User-Agent': CHROME_UA },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: 'system', content: effectiveSystemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
-            temperature: 0.3,
-            max_tokens: mode === 'event-brief' ? 180 : 100,
-            top_p: 0.9,
-            ...extraBody,
-          }),
-          signal: AbortSignal.timeout(25_000),
-        });
+        const fallbackModel = getFallbackModel(provider, model);
+        if (!fallbackModel) return null;
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`[SummarizeArticle:${provider}] API error:`, response.status, errorText);
-          throw new Error(response.status === 429 ? 'Rate limited' : `${provider} API error`);
-        }
-
-        const data = await response.json() as any;
-        const tokens = (data.usage?.total_tokens as number) || 0;
-        const message = data.choices?.[0]?.message;
-        const rawText = typeof message?.content === 'string' ? message.content.trim() : '';
-        let rawContent = stripThinkingTags(rawText);
-
-        if (['brief', 'analysis', 'event-brief'].includes(mode) && rawContent.length < 20) {
-          console.warn(`[SummarizeArticle:${provider}] Output too short after stripping (${rawContent.length} chars), rejecting`);
-          return null;
-        }
-
-        if (['brief', 'analysis', 'event-brief'].includes(mode) && hasReasoningPreamble(rawContent)) {
-          console.warn(`[SummarizeArticle:${provider}] Reasoning preamble detected, rejecting`);
-          return null;
-        }
-
-        return rawContent ? { summary: rawContent, model, tokens } : null;
+        console.warn(`[SummarizeArticle:${provider}] Retrying with fallback model ${fallbackModel}`);
+        return summarizeWithModel(fallbackModel);
       },
     );
 

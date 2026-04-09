@@ -16,6 +16,173 @@
 
 ---
 
+### 15. 调整详情弹窗、清理 Pro/社区入口，并接通 Tavily 与 MiniMax 高速模型
+
+#### 用户提问
+
+1、将详情弹窗里的 AI 解读的内容调整到详情弹窗的最上方  
+2、改用 `MiniMax-M2.5-highspeed`  
+3、去掉 `@eliehabib` 和 `Join the Discord Community`  
+4、去掉面板里的 pro 的选项  
+5、现在获取新闻还是获取不到，Tavily 里 key 没有使用量；给出了 Tavily MCP 地址，询问是否能用到
+
+#### AI 处理摘要
+
+- 将地图详情弹窗里的 AI 解读区块从内容底部改为顶部插入，保证弹窗一展开就先看到 AI 解读。
+- 将本地摘要模型配置切到 `MiniMax-M2.5-highspeed`，并补上针对 MiniMax 高速模型的兜底逻辑：若高速模型只吐 reasoning / 无有效正文，则同链路自动回退到 `MiniMax-M2.5`。
+- 去除了页脚里的 `@eliehabib` 署名、停用了社区浮层 `Join the Discord Community`，并移除了面板区里的 Pro add-panel 入口及显式 `PRO` badge。
+- 将用户给出的 Tavily key 接入当前实际使用的 provider chain：写入 `TAVILY_API_KEYS`，并验证 `searchRecentStockHeadlines()` 已真实命中 Tavily。
+- 确认 Tavily MCP 地址目前不会被现有 `stock-news-search.ts` 自动使用，因为当前服务端链路走的是 Tavily 的 HTTP Search API，而不是 MCP client。
+
+#### 决策
+
+- 保留 `MiniMax-M2.5-highspeed` 作为首选模型，避免直接违背用户指定；同时通过服务端自动回退保证摘要功能稳定可用。
+- 不把 Tavily MCP 地址硬接进股票新闻链路，因为当前代码没有 MCP transport/client 适配层，直接接入会扩大改动面且没有必要。
+- 对显式可见的 Pro / 社区 / 署名入口直接移除，而不是仅通过 CSS 隐藏。
+
+#### 实际动作
+
+- 更新 `src/components/MapPopup.ts`
+- 更新 `src/app/panel-layout.ts`
+- 更新 `src/components/CommunityWidget.ts`
+- 更新 `src/components/Panel.ts`
+- 更新 `src/components/CustomWidgetPanel.ts`
+- 更新 `src/components/WidgetChatModal.ts`
+- 更新 `server/worldmonitor/news/v1/summarize-article.ts`
+- 更新 `.env.local`
+- 更新 `PROMPT_LOG.md`
+
+#### 涉及文件
+
+- `src/components/MapPopup.ts`
+- `src/app/panel-layout.ts`
+- `src/components/CommunityWidget.ts`
+- `src/components/Panel.ts`
+- `src/components/CustomWidgetPanel.ts`
+- `src/components/WidgetChatModal.ts`
+- `server/worldmonitor/news/v1/summarize-article.ts`
+- `.env.local`
+- `PROMPT_LOG.md`
+
+#### 验证结果
+
+- `npx tsc --noEmit` 通过。
+- `media` 开发服务已重启并继续监听 `http://localhost:3000/`。
+- 直接调用摘要接口时，已成功返回 `provider: "ollama"`、`model: "MiniMax-M2.5-highspeed"`、`status: "SUMMARIZE_STATUS_SUCCESS"`。
+- 直接调用 `searchRecentStockHeadlines('DIS', 'Walt Disney', 5)` 时，已返回 `provider: "tavily"`、`count: 5`。
+- Tavily HTTP API 直连测试也已返回新闻结果，说明 key 本身有效。
+
+#### 下一步
+
+- 如果后续希望让媒体行业新闻面板也走 Tavily，需要单独在媒体/news 拉取链路里新增搜索 provider，不会自动复用当前股票新闻链。
+- 如果要真正用上 Tavily MCP 地址，需要新增 MCP client 调用层；当前代码尚未具备该接入方式。
+
+---
+
+### 14. 排查 MiniMax 摘要接口无法生成，并切换到可用模型与 token 预算
+
+#### 用户提问
+
+minimax 的 `baseUrl` 是 `export OPENAI_BASE_URL=https://api.minimaxi.com/v1`
+
+帮我排查一下
+
+#### AI 处理摘要
+
+- 先确认项目内并不读取 `OPENAI_BASE_URL`，而是通过 `OLLAMA_API_URL / OLLAMA_API_KEY / OLLAMA_MODEL` 这组配置走 OpenAI-compatible 摘要链路。
+- 直接对 MiniMax 的 `/v1/chat/completions` 做模型对照测试，发现 `MiniMax-M2.7` 不适合当前这条文本摘要调用，而 `MiniMax-M2.5` 可以返回正文。
+- 抓取与项目摘要提示词一致的原始返回，确认 `MiniMax-M2.5` 会先输出较长的 reasoning / 自述内容，再给最终摘要；原有 `max_tokens=100` 会在最终答案出现前被截断，导致服务端过滤后判空。
+- 将本地摘要模型切换为 `MiniMax-M2.5`，并在服务端对 `MiniMax-*` 模型提高摘要 token 预算，使 stripping/防 preamble 过滤后仍能保留最终答案。
+
+#### 决策
+
+- 不继续使用 `MiniMax-M2.7` 作为当前项目的摘要模型。
+- 保留现有 `stripThinkingTags + reasoning preamble` 过滤逻辑，只通过模型切换和 token 预算修正来兼容 MiniMax。
+- 对 MiniMax 仅做定向 token 提升，避免影响其他 provider 的成本和响应时延。
+
+#### 实际动作
+
+- 更新 `.env.local`
+- 更新 `server/worldmonitor/news/v1/summarize-article.ts`
+- 更新 `PROMPT_LOG.md`
+
+#### 涉及文件
+
+- `.env.local`
+- `server/worldmonitor/news/v1/summarize-article.ts`
+- `PROMPT_LOG.md`
+
+#### 验证结果
+
+- `npx tsc --noEmit` 通过。
+- `media` 开发服务已重启并继续监听 `http://localhost:3000/`。
+- 直接调用 `http://localhost:3000/api/news/v1/summarize-article` 并指定 `provider: "ollama"` 时，已成功返回：
+  - `provider: "ollama"`
+  - `model: "MiniMax-M2.5"`
+  - `status: "SUMMARIZE_STATUS_SUCCESS"`
+
+#### 下一步
+
+- 如需进一步降低延迟，可继续对比 `MiniMax-M2.5-highspeed` 是否更适合短摘要场景。
+- 若后续还要接入 MiniMax 的其他能力，再单独评估是否需要新增专门的 reasoning / agent provider，而不是复用当前摘要链路。
+
+---
+
+### 13. 排查新闻摘要接口误报 OpenRouter 未配置，并修正 MiniMax 兼容地址
+
+#### 用户提问
+
+http://localhost:3000/api/news/v1/summarize-article
+{
+    "summary": "",
+    "model": "",
+    "provider": "openrouter",
+    "tokens": 0,
+    "fallback": true,
+    "error": "",
+    "errorType": "",
+    "status": "SUMMARIZE_STATUS_SKIPPED",
+    "statusDetail": "OPENROUTER_API_KEY not configured"
+}
+
+#### AI 处理摘要
+
+- 复查新闻摘要的 provider chain，确认该返回值只是最后一次 fallback 的结果，不是首因。
+- 验证本地 `OLLAMA_*` 配置后发现，当前 `aiOllama` 链路实际已命中 MiniMax，但配置使用了 `https://api.minimaxi.com/anthropic/v1`，与项目现有的 OpenAI-compatible `chat/completions` 通道不匹配。
+- 修正 OpenAI-compatible 基地址为 `https://api.minimaxi.com/v1`，并补强服务端 URL 拼接逻辑，避免带路径的兼容端点被错误重写为根路径。
+- 重启 `media` 前端并实测 `/api/news/v1/summarize-article`，确认已不再因 OpenRouter 未配置而误导；当前剩余问题为 MiniMax 上游对该模型请求返回空内容或 `500 unknown error, 520 (1000)`。
+
+#### 决策
+
+- 不把 `OPENROUTER_API_KEY not configured` 当作根因处理，因为它只是 `ollama -> groq -> openrouter` 回退链中的末端现象。
+- 保留现有 OpenAI-compatible 摘要链路，不临时引入 Anthropic wire protocol，避免扩大改动面。
+- 优先把本地兼容入口和 URL 组装修正到与 MiniMax 官方 OpenAI-compatible 接法一致。
+
+#### 实际动作
+
+- 更新 `server/_shared/llm.ts`
+- 更新 `.env.local`
+- 更新 `PROMPT_LOG.md`
+
+#### 涉及文件
+
+- `server/_shared/llm.ts`
+- `.env.local`
+- `PROMPT_LOG.md`
+
+#### 验证结果
+
+- `npx tsc --noEmit` 通过。
+- `media` 开发服务已重启并继续监听 `http://localhost:3000/`。
+- 直接请求 `provider: "ollama"` 时，返回已从错误的 OpenRouter 未配置提示，收敛为 MiniMax 上游返回空响应或 `500 unknown error, 520 (1000)`。
+
+#### 下一步
+
+- 若继续使用 MiniMax，优先核对当前账号/API Key 是否支持 OpenAI-compatible 文本接口及 `MiniMax-M2.7` 模型。
+- 若该上游仍不稳定，可考虑在项目中新增 Anthropic-compatible provider，专门适配 MiniMax 推荐接法。
+
+---
+
 ## 第一波
 
 ### 1. 创建 Prompt 记录文件
@@ -286,30 +453,6 @@
   - `media-audience`
   - `media-regions`
 
-#### 实际动作
-
-- 更新 `server/worldmonitor/market/v1/stock-news-search.ts`
-- 更新 `src/services/runtime-config.ts`
-- 更新 `src/services/settings-constants.ts`
-- 更新 `src-tauri/sidecar/local-api-server.mjs`
-- 更新 `server/worldmonitor/news/v1/_feeds.ts`
-- 更新 `src/config/feeds.ts`
-- 更新 `tests/stock-news-search.test.mts`
-- 新增 `tests/media-feeds.test.mts`
-- 重启 `yarn dev:media`
-
-#### 涉及文件
-
-- `server/worldmonitor/market/v1/stock-news-search.ts`
-- `src/services/runtime-config.ts`
-- `src/services/settings-constants.ts`
-- `src-tauri/sidecar/local-api-server.mjs`
-- `server/worldmonitor/news/v1/_feeds.ts`
-- `src/config/feeds.ts`
-- `tests/stock-news-search.test.mts`
-- `tests/media-feeds.test.mts`
-- `PROMPT_LOG.md`
-
 #### 验证结果
 
 - `npx tsx --test tests/stock-news-search.test.mts tests/media-feeds.test.mts` 通过。
@@ -381,30 +524,6 @@
 - 保留业务主界面、设置和登录相关必要交互。
 - 移除与当前传媒业务无关的对外推广、社区、文档、状态页和下载入口。
 - 对受限能力保留“不可用/需登录”的状态，但不再展示“升级到 Pro”入口。
-
-#### 实际动作
-
-- 更新 `server/_shared/llm.ts`
-- 更新 `src/App.ts`
-- 更新 `src/app/panel-layout.ts`
-- 更新 `src/components/Panel.ts`
-- 更新 `src/components/UnifiedSettings.ts`
-- 更新 `src/components/RuntimeConfigPanel.ts`
-- 更新 `src/settings-main.ts`
-- 更新 `src/components/ResilienceWidget.ts`
-- 更新 `PROMPT_LOG.md`
-
-#### 涉及文件
-
-- `server/_shared/llm.ts`
-- `src/App.ts`
-- `src/app/panel-layout.ts`
-- `src/components/Panel.ts`
-- `src/components/UnifiedSettings.ts`
-- `src/components/RuntimeConfigPanel.ts`
-- `src/settings-main.ts`
-- `src/components/ResilienceWidget.ts`
-- `PROMPT_LOG.md`
 
 #### 验证结果
 
@@ -484,20 +603,6 @@
 - 新增独立 `media` 变体数据源，而非替换现有 `full` 变体数据。
 - 聚焦传媒行业核心场景：媒体产业、娱乐制作、广播电视、数字媒体、出版、营销传播。
 
-#### 实际动作
-
-- 更新 `server/worldmonitor/news/v1/_feeds.ts`
-- 更新 `server/worldmonitor/news/v1/list-feed-digest.ts`
-- 更新 `shared/rss-allowed-domains.json`
-- 更新 `docs/data-sources.mdx`
-
-#### 涉及文件
-
-- `server/worldmonitor/news/v1/_feeds.ts`
-- `server/worldmonitor/news/v1/list-feed-digest.ts`
-- `shared/rss-allowed-domains.json`
-- `docs/data-sources.mdx`
-
 #### 验证结果
 
 - `media` 变体已接入配置体系，`npm run dev:media` / `npm run build:media` 命令已存在。
@@ -531,32 +636,6 @@
 - 传媒首页默认结构调整为“编辑部工作台 + 传媒业务线”。
 - 优先保留与选题、平台分发、商业化、版权和受众相关的面板。
 - 中文化先覆盖传媒首页高频可见界面，不做全仓一次性翻译。
-
-#### 实际动作
-
-- 新增 `src/components/MediaStorylinePanel.ts`
-- 新增 `src/components/MediaBusinessRadarPanel.ts`
-- 更新 `src/components/index.ts`
-- 更新 `src/App.ts`
-- 更新 `src/config/panels.ts`
-- 更新 `src/app/panel-layout.ts`
-- 更新 `src/app/data-loader.ts`
-- 更新 `src/locales/en.json`
-- 更新 `src/locales/zh.json`
-- 更新 `PROMPT_LOG.md`
-
-#### 涉及文件
-
-- `src/components/MediaStorylinePanel.ts`
-- `src/components/MediaBusinessRadarPanel.ts`
-- `src/components/index.ts`
-- `src/App.ts`
-- `src/config/panels.ts`
-- `src/app/panel-layout.ts`
-- `src/app/data-loader.ts`
-- `src/locales/en.json`
-- `src/locales/zh.json`
-- `PROMPT_LOG.md`
 
 #### 验证结果
 
@@ -657,16 +736,6 @@
 - 优先处理用户在首页和命令面板中最容易直接看到的英文项。
 - 保留技术 key，不动功能逻辑，只收口展示层文本。
 
-#### 实际动作
-
-- 更新 `src/locales/zh.json`
-- 更新 `PROMPT_LOG.md`
-
-#### 涉及文件
-
-- `src/locales/zh.json`
-- `PROMPT_LOG.md`
-
 #### 验证结果
 
 - 本轮修改后 `src/locales/zh.json` 仍可正常解析为有效 JSON。
@@ -735,37 +804,6 @@
 - 通过 `aiOllama` 这条兼容 OpenAI 的现有配置链路接入 Minimax。
 - `OLLAMA_API_KEY` 作为可选字段展示，不纳入必填校验，避免影响本地无鉴权的 Ollama 用法。
 
-#### 实际动作
-
-- 更新 `server/worldmonitor/news/v1/_shared.ts`
-- 更新 `server/worldmonitor/news/v1/summarize-article.ts`
-- 新增 `src/services/event-brief.ts`
-- 更新 `src/components/MapPopup.ts`
-- 更新 `src/services/runtime-config.ts`
-- 更新 `src/services/settings-constants.ts`
-- 更新 `src/services/ollama-models.ts`
-- 更新 `src/components/RuntimeConfigPanel.ts`
-- 更新 `src/settings-main.ts`
-- 更新 `src/locales/en.json`
-- 更新 `src/locales/zh.json`
-- 更新 `src/styles/main.css`
-- 更新 `PROMPT_LOG.md`
-
-#### 涉及文件
-
-- `server/worldmonitor/news/v1/_shared.ts`
-- `server/worldmonitor/news/v1/summarize-article.ts`
-- `src/services/event-brief.ts`
-- `src/components/MapPopup.ts`
-- `src/services/runtime-config.ts`
-- `src/services/settings-constants.ts`
-- `src/services/ollama-models.ts`
-- `src/components/RuntimeConfigPanel.ts`
-- `src/settings-main.ts`
-- `src/locales/en.json`
-- `src/locales/zh.json`
-- `src/styles/main.css`
-- `PROMPT_LOG.md`
 
 #### 验证结果
 

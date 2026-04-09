@@ -475,7 +475,7 @@ export class MapPopup {
       </div>
       <p class="popup-ai-brief-content loading">${escapeHtml(t('popups.aiBrief.loading'))}</p>
     `;
-    popupBody.appendChild(section);
+    popupBody.prepend(section);
 
     const contentEl = section.querySelector('.popup-ai-brief-content');
     const metaEl = section.querySelector('.popup-ai-brief-meta');

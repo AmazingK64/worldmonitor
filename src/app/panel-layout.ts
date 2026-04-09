@@ -99,7 +99,6 @@ import { initPaymentFailureBanner } from '@/components/payment-failure-banner';
 import { handleCheckoutReturn } from '@/services/checkout-return';
 import { initCheckoutOverlay, destroyCheckoutOverlay, showCheckoutSuccess } from '@/services/checkout';
 import { McpDataPanel } from '@/components/McpDataPanel';
-import { openMcpConnectModal } from '@/components/McpConnectModal';
 import { loadMcpPanels, saveMcpPanel } from '@/services/mcp-store';
 import type { McpPanelSpec } from '@/services/mcp-store';
 import { getAuthState, subscribeAuthState } from '@/services/auth-state';
@@ -485,7 +484,7 @@ export class PanelLayoutManager implements AppModule {
           <img src="/favico/favicon-32x32.png" alt="" width="28" height="28" class="site-footer-icon" />
           <div class="site-footer-brand-text">
             <span class="site-footer-name">${footerBrand}</span>
-            <span class="site-footer-sub">v${__APP_VERSION__} &middot; <a href="https://x.com/eliehabib" target="_blank" rel="noopener" class="site-footer-credit">@eliehabib</a></span>
+            <span class="site-footer-sub">v${__APP_VERSION__}</span>
           </div>
         </div>
         <span class="site-footer-copy">&copy; ${new Date().getFullYear()} ${variantMeta.siteName}</span>
@@ -1187,64 +1186,8 @@ export class PanelLayoutManager implements AppModule {
     });
     panelsGrid.appendChild(addPanelBlock);
 
-    // Always create Pro and MCP add-panel blocks — show/hide reactively via auth state.
-    const proBlock = document.createElement('button');
-    proBlock.className = 'add-panel-block ai-widget-block ai-widget-block-pro';
-    proBlock.setAttribute('aria-label', t('widgets.createInteractive'));
-    const proIcon = document.createElement('span');
-    proIcon.className = 'add-panel-block-icon';
-    proIcon.textContent = '\u26a1';
-    const proLabel = document.createElement('span');
-    proLabel.className = 'add-panel-block-label';
-    proLabel.textContent = t('widgets.createInteractive');
-    const proBadge = document.createElement('span');
-    proBadge.className = 'widget-pro-badge';
-    proBadge.textContent = t('widgets.proBadge');
-    proBlock.appendChild(proIcon);
-    proBlock.appendChild(proLabel);
-    proBlock.appendChild(proBadge);
-    proBlock.addEventListener('click', () => {
-      openWidgetChatModal({
-        mode: 'create',
-        tier: 'pro',
-        onComplete: (spec) => this.addCustomWidget(spec),
-      });
-    });
-    panelsGrid.appendChild(proBlock);
-
-    const mcpBlock = document.createElement('button');
-    mcpBlock.className = 'add-panel-block mcp-panel-block';
-    mcpBlock.setAttribute('aria-label', t('mcp.connectPanel'));
-    const mcpIcon = document.createElement('span');
-    mcpIcon.className = 'add-panel-block-icon';
-    mcpIcon.textContent = '\u26a1';
-    const mcpLabel = document.createElement('span');
-    mcpLabel.className = 'add-panel-block-label';
-    mcpLabel.textContent = t('mcp.connectPanel');
-    const mcpBadge = document.createElement('span');
-    mcpBadge.className = 'widget-pro-badge';
-    mcpBadge.textContent = t('widgets.proBadge');
-    mcpBlock.appendChild(mcpIcon);
-    mcpBlock.appendChild(mcpLabel);
-    mcpBlock.appendChild(mcpBadge);
-    mcpBlock.addEventListener('click', () => {
-      openMcpConnectModal({
-        onComplete: (spec) => this.addMcpPanel(spec),
-      });
-    });
-    panelsGrid.appendChild(mcpBlock);
-
-    // Reactively show/hide Pro-only UI blocks based on auth state
-    const proBlocks = [proBlock, mcpBlock];
-    const applyProBlockGating = (isPro: boolean) => {
-      for (const block of proBlocks) {
-        block.style.display = isPro ? '' : 'none';
-      }
-    };
-    applyProBlockGating(hasPremiumAccess(getAuthState()));
-    this.proBlockUnsubscribe = subscribeAuthState((state) => {
-      applyProBlockGating(hasPremiumAccess(state));
-    });
+    this.proBlockUnsubscribe?.();
+    this.proBlockUnsubscribe = null;
 
     const bottomGrid = document.getElementById('mapBottomGrid');
     if (bottomGrid) {

@@ -20,6 +20,19 @@ const OLLAMA_HOST_ALLOWLIST = new Set([
   'api.minimaxi.com',
 ]);
 
+function buildCompatibleChatCompletionsUrl(baseUrl: string): string {
+  const url = new URL(baseUrl);
+  if (url.pathname.endsWith('/chat/completions')) {
+    return url.toString();
+  }
+
+  if (!url.pathname.endsWith('/')) {
+    url.pathname += '/';
+  }
+
+  return new URL('chat/completions', url).toString();
+}
+
 function isLocalDeployment(): boolean {
   const mode = typeof process !== 'undefined' ? (process.env?.LOCAL_API_MODE || '') : '';
   return mode.includes('sidecar') || mode.includes('docker');
@@ -50,7 +63,7 @@ export function getProviderCredentials(
     if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
 
     return {
-      apiUrl: new URL('/v1/chat/completions', baseUrl).toString(),
+      apiUrl: buildCompatibleChatCompletionsUrl(baseUrl),
       model: overrides.model || process.env.OLLAMA_MODEL || 'llama3.1:8b',
       headers,
       extraBody: { think: false },
