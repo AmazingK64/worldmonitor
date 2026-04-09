@@ -111,6 +111,7 @@ const VARIANT_LAYER_ORDER: Record<MapVariant, Array<keyof MapLayers>> = {
   media: [
     'hotspots', 'weather',
     'outages', 'economic', 'techEvents', 'datacenters',
+    'gulfInvestments', 'startupHubs',
     'dayNight',
   ],
   happy: [
