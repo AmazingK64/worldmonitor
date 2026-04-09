@@ -425,7 +425,7 @@ export class MapPopup {
     this.popup.classList.add('open');
   };
 
-  public hide(): void {s
+  public hide(): void {
     this.aiBriefAbortController?.abort();
     this.aiBriefAbortController = null;
     this.aiBriefRequestId += 1;

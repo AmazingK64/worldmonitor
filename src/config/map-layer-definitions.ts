@@ -14,6 +14,7 @@ export interface LayerDefinition {
   fallbackLabel: string;
   renderers: MapRenderer[];
   premium?: 'locked' | 'enhanced';
+  variantFallbackLabels?: Partial<Record<MapVariant, string>>;
 }
 
 const def = (
@@ -27,7 +28,7 @@ const def = (
 
 export const LAYER_REGISTRY: Record<keyof MapLayers, LayerDefinition> = {
   iranAttacks:              def('iranAttacks',              '&#127919;', 'iranAttacks',              'Iran Attacks', ['flat', 'globe'], _desktop ? 'locked' : undefined),
-  hotspots:                 def('hotspots',                 '&#127919;', 'intelHotspots',            'Intel Hotspots'),
+  hotspots:                 { ...def('hotspots', '&#127919;', 'intelHotspots', 'Intel Hotspots'), variantFallbackLabels: { media: '媒体热点' } },
   conflicts:                def('conflicts',                '&#9876;',   'conflictZones',            'Conflict Zones'),
 
   bases:                    def('bases',                    '&#127963;', 'militaryBases',            'Military Bases'),
@@ -54,7 +55,7 @@ export const LAYER_REGISTRY: Record<keyof MapLayers, LayerDefinition> = {
   natural:                  def('natural',                  '&#127755;', 'naturalEvents',            'Natural Events'),
   fires:                    def('fires',                    '&#128293;', 'fires',                    'Fires'),
   waterways:                def('waterways',                '&#9875;',   'strategicWaterways',       'Strategic Waterways'),
-  economic:                 def('economic',                 '&#128176;', 'economicCenters',          'Economic Centers'),
+  economic:                 { ...def('economic', '&#128176;', 'economicCenters', 'Economic Centers'), variantFallbackLabels: { media: '媒体需求' } },
   minerals:                 def('minerals',                 '&#128142;', 'criticalMinerals',         'Critical Minerals'),
   gpsJamming:               def('gpsJamming',               '&#128225;', 'gpsJamming',               'GPS Jamming', ['flat', 'globe'], _desktop ? 'locked' : undefined),
   ciiChoropleth:            def('ciiChoropleth',            '&#127758;', 'ciiChoropleth',            'CII Instability', ['flat'], _desktop ? 'enhanced' : undefined),
@@ -65,7 +66,7 @@ export const LAYER_REGISTRY: Record<keyof MapLayers, LayerDefinition> = {
   techHQs:                  def('techHQs',                  '&#127970;', 'techHQs',                  'Tech HQs'),
   accelerators:             def('accelerators',             '&#9889;',   'accelerators',             'Accelerators'),
   cloudRegions:             def('cloudRegions',             '&#9729;',   'cloudRegions',             'Cloud Regions'),
-  techEvents:               def('techEvents',               '&#128197;', 'techEvents',               'Tech Events'),
+  techEvents:               { ...def('techEvents', '&#128197;', 'techEvents', 'Tech Events'), variantFallbackLabels: { media: '媒体活动' } },
   stockExchanges:           def('stockExchanges',           '&#127963;', 'stockExchanges',           'Stock Exchanges'),
   financialCenters:         def('financialCenters',         '&#128176;', 'financialCenters',         'Financial Centers'),
   centralBanks:             def('centralBanks',             '&#127974;', 'centralBanks',             'Central Banks'),
@@ -108,9 +109,9 @@ const VARIANT_LAYER_ORDER: Record<MapVariant, Array<keyof MapLayers>> = {
     'resilienceScore', 'natural', 'cyberThreats', 'sanctions', 'dayNight',
   ],
   media: [
-    'hotspots', 'protests', 'natural', 'weather',
+    'hotspots', 'weather',
     'outages', 'economic', 'techEvents', 'datacenters',
-    'cables', 'tradeRoutes', 'dayNight',
+    'dayNight',
   ],
   happy: [
     'positiveEvents', 'kindness', 'happiness', 'resilienceScore',
@@ -220,11 +221,13 @@ export const LAYER_SYNONYMS: Record<string, Array<keyof MapLayers>> = {
 };
 
 export function resolveLayerLabel(def: LayerDefinition, tFn?: (key: string) => string): string {
+  const variant = ((typeof document !== 'undefined' ? document.documentElement?.dataset?.variant : '') || 'full') as MapVariant;
+  const variantFallback = def.variantFallbackLabels?.[variant];
   if (tFn) {
     const translated = tFn(I18N_PREFIX + def.i18nSuffix);
-    if (translated && translated !== I18N_PREFIX + def.i18nSuffix) return translated;
+    if (translated && translated !== I18N_PREFIX + def.i18nSuffix && !variantFallback) return translated;
   }
-  return def.fallbackLabel;
+  return variantFallback || def.fallbackLabel;
 }
 
 export function bindLayerSearch(container: HTMLElement): void {
