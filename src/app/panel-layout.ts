@@ -286,6 +286,16 @@ export class PanelLayoutManager implements AppModule {
     const desktopBrand = SITE_VARIANT === 'media' ? 'MEDIA' : 'MONITOR';
     const mobileBrand = variantMeta.siteName;
     const footerBrand = variantMeta.siteName.toUpperCase();
+    const hiddenVariantKeys = new Set(['full', 'tech', 'finance', 'commodity', 'happy']);
+    const allVariants = [
+      { key: 'full', icon: '🌍', label: t('header.world'), href: 'https://worldmonitor.app', title: t('header.world') },
+      { key: 'tech', icon: '💻', label: t('header.tech'), href: 'https://tech.worldmonitor.app', title: t('header.tech') },
+      { key: 'finance', icon: '📈', label: t('header.finance'), href: 'https://finance.worldmonitor.app', title: t('header.finance') },
+      { key: 'media', icon: '📰', label: '媒体', href: 'https://media.worldmonitor.app', title: 'Media' },
+      { key: 'commodity', icon: '⛏️', label: t('header.commodity'), href: 'https://commodity.worldmonitor.app', title: t('header.commodity') },
+      { key: 'happy', icon: '☀️', label: 'Good News', href: 'https://happy.worldmonitor.app', title: 'Good News' },
+    ];
+    const visibleVariants = allVariants.filter((variant) => !hiddenVariantKeys.has(variant.key) || variant.key === SITE_VARIANT);
 
     this.ctx.container.innerHTML = `
       ${this.ctx.isDesktopApp ? '<div class="tauri-titlebar" data-tauri-drag-region></div>' : ''}
@@ -299,60 +309,16 @@ export class PanelLayoutManager implements AppModule {
         const inIframe = window.self !== window.top;
         const vHref = (v: string, prod: string) => local || SITE_VARIANT === v ? '#' : prod;
         const vTarget = (v: string) => !local && SITE_VARIANT !== v && inIframe ? 'target="_blank" rel="noopener"' : '';
-        return `
-            <a href="${vHref('full', 'https://worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'full' ? 'active' : ''}"
-               data-variant="full"
-               ${vTarget('full')}
-               title="${t('header.world')}${SITE_VARIANT === 'full' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">🌍</span>
-              <span class="variant-label">${t('header.world')}</span>
-            </a>
-            <span class="variant-divider"></span>
-            <a href="${vHref('tech', 'https://tech.worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'tech' ? 'active' : ''}"
-               data-variant="tech"
-               ${vTarget('tech')}
-               title="${t('header.tech')}${SITE_VARIANT === 'tech' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">💻</span>
-              <span class="variant-label">${t('header.tech')}</span>
-            </a>
-            <span class="variant-divider"></span>
-            <a href="${vHref('finance', 'https://finance.worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'finance' ? 'active' : ''}"
-               data-variant="finance"
-               ${vTarget('finance')}
-               title="${t('header.finance')}${SITE_VARIANT === 'finance' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">📈</span>
-              <span class="variant-label">${t('header.finance')}</span>
-            </a>
-            <span class="variant-divider"></span>
-            <a href="${vHref('media', 'https://media.worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'media' ? 'active' : ''}"
-               data-variant="media"
-               ${vTarget('media')}
-               title="Media${SITE_VARIANT === 'media' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">📰</span>
-              <span class="variant-label">媒体</span>
-            </a>
-            <span class="variant-divider"></span>
-            <a href="${vHref('commodity', 'https://commodity.worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'commodity' ? 'active' : ''}"
-               data-variant="commodity"
-               ${vTarget('commodity')}
-               title="${t('header.commodity')}${SITE_VARIANT === 'commodity' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">⛏️</span>
-              <span class="variant-label">${t('header.commodity')}</span>
-            </a>
-            <span class="variant-divider"></span>
-            <a href="${vHref('happy', 'https://happy.worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'happy' ? 'active' : ''}"
-               data-variant="happy"
-               ${vTarget('happy')}
-               title="Good News${SITE_VARIANT === 'happy' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">☀️</span>
-              <span class="variant-label">Good News</span>
-            </a>`;
+        return visibleVariants.map((variant, index) => `
+            ${index > 0 ? '<span class="variant-divider"></span>' : ''}
+            <a href="${vHref(variant.key, variant.href)}"
+               class="variant-option ${SITE_VARIANT === variant.key ? 'active' : ''}"
+               data-variant="${variant.key}"
+               ${vTarget(variant.key)}
+               title="${variant.title}${SITE_VARIANT === variant.key ? ` ${t('common.currentVariant')}` : ''}">
+              <span class="variant-icon">${variant.icon}</span>
+              <span class="variant-label">${variant.label}</span>
+            </a>`).join('');
       })()}</div>
           <span class="logo">${desktopBrand}</span><span class="logo-mobile">${mobileBrand}</span><span class="version">v${__APP_VERSION__}</span>${BETA_MODE ? '<span class="beta-badge">BETA</span>' : ''}
           <button class="mobile-settings-btn" id="mobileSettingsBtn" title="${t('header.settings')}">
@@ -397,15 +363,7 @@ export class PanelLayoutManager implements AppModule {
         </div>
         <div class="mobile-menu-divider"></div>
         ${(() => {
-        const variants = [
-          { key: 'full', icon: '🌍', label: t('header.world') },
-          { key: 'tech', icon: '💻', label: t('header.tech') },
-          { key: 'finance', icon: '📈', label: t('header.finance') },
-          { key: 'media', icon: '📰', label: 'Media' },
-          { key: 'commodity', icon: '⛏️', label: t('header.commodity') },
-          { key: 'happy', icon: '☀️', label: 'Good News' },
-        ];
-        return variants.map(v =>
+        return visibleVariants.map(v =>
           `<button class="mobile-menu-item mobile-menu-variant ${v.key === SITE_VARIANT ? 'active' : ''}" data-variant="${v.key}">
             <span class="mobile-menu-item-icon">${v.icon}</span>
             <span class="mobile-menu-item-label">${v.label}</span>

@@ -79,8 +79,11 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
   private timelineBody: HTMLElement | null = null;
   private scoreCard: HTMLElement | null = null;
   private factsBody: HTMLElement | null = null;
+  private factsCard: HTMLElement | null = null;
   private resilienceWidget: ResilienceWidget | null = null;
   private energyBody: HTMLElement | null = null;
+  private energyCard: HTMLElement | null = null;
+  private marketsCard: HTMLElement | null = null;
 
   private readonly handleGlobalKeydown = (event: KeyboardEvent): void => {
     if (!this.panel.classList.contains('active')) return;
@@ -445,9 +448,12 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     this.factsBody.replaceChildren();
 
     if (!data.headOfState && !data.wikipediaSummary && data.population === 0 && !data.capital) {
+      this.toggleCard(this.factsCard, false);
       this.factsBody.append(this.makeEmpty(t('countryBrief.noFacts')));
       return;
     }
+
+    this.toggleCard(this.factsCard, true);
 
     if (data.wikipediaThumbnailUrl) {
       const img = this.el('img', 'cdp-facts-thumbnail');
@@ -498,9 +504,12 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
       || data.jodiGasAvailable || data.gasStorageAvailable || data.electricityAvailable;
 
     if (!hasAny) {
+      this.toggleCard(this.energyCard, false);
       this.energyBody.append(this.makeEmpty('Energy data unavailable for this country.'));
       return;
     }
+
+    this.toggleCard(this.energyCard, true);
 
     if (data.mixAvailable) {
       const segments: Array<{ label: string; color: string; value: number }> = [
@@ -893,9 +902,12 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     this.marketsBody.replaceChildren();
 
     if (markets.length === 0) {
+      this.toggleCard(this.marketsCard, false);
       this.marketsBody.append(this.makeEmpty(t('countryBrief.noMarkets')));
       return;
     }
+
+    this.toggleCard(this.marketsCard, true);
 
     for (const market of markets.slice(0, 5)) {
       const item = this.el('div', 'cdp-market-item');
@@ -1064,12 +1076,14 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     const [briefCard, briefBody] = this.sectionCard(t('countryBrief.intelBrief'));
 
     const [factsCard, factsBody] = this.sectionCard(t('countryBrief.countryFacts'));
+    this.factsCard = factsCard;
     this.factsBody = factsBody;
     factsBody.append(this.makeLoading(t('countryBrief.loadingFacts')));
     const factsExpanded = this.el('div', 'cdp-expanded-only');
     factsExpanded.append(factsCard);
 
     const [energyCard, energyBody] = this.sectionCard('Energy Profile');
+    this.energyCard = energyCard;
     this.energyBody = energyBody;
     energyBody.append(this.makeLoading('Loading energy data\u2026'));
 
@@ -1080,6 +1094,7 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     this.militaryBody = militaryBody;
     this.infrastructureBody = infraBody;
     this.economicBody = economicBody;
+    this.marketsCard = marketsCard;
     this.marketsBody = marketsBody;
     this.briefBody = briefBody;
 
@@ -1104,7 +1119,10 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
   private resetPanelContent(): void {
     this.destroyResilienceWidget();
     this.scoreCard = null;
+    this.factsCard = null;
     this.energyBody = null;
+    this.energyCard = null;
+    this.marketsCard = null;
     this.content.replaceChildren();
   }
 
@@ -1346,6 +1364,11 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
 
   private badge(text: string, className: string): HTMLElement {
     return this.el('span', className, text);
+  }
+
+  private toggleCard(card: HTMLElement | null, visible: boolean): void {
+    if (!card) return;
+    card.style.display = visible ? '' : 'none';
   }
 
   private formatBrief(text: string, headlineCount = 0): string {
