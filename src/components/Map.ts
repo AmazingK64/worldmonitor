@@ -417,7 +417,7 @@ export class MapComponent {
     ];
     const layers = SITE_VARIANT === 'tech' ? techLayers : SITE_VARIANT === 'finance' ? financeLayers : SITE_VARIANT === 'happy' ? happyLayers : SITE_VARIANT === 'media' ? mediaLayers : fullLayers;
     const layerLabelKeys: Partial<Record<keyof MapLayers, string>> = {
-      hotspots: 'components.deckgl.layers.intelHotspots',
+      hotspots: SITE_VARIANT === 'media' ? 'components.deckgl.layers.mediaHotspots' : 'components.deckgl.layers.intelHotspots',
       conflicts: 'components.deckgl.layers.conflictZones',
       bases: 'components.deckgl.layers.militaryBases',
       nuclear: 'components.deckgl.layers.nuclearSites',
@@ -431,13 +431,13 @@ export class MapComponent {
       flights: 'components.deckgl.layers.flightDelays',
       natural: 'components.deckgl.layers.naturalEvents',
       weather: 'components.deckgl.layers.weatherAlerts',
-      economic: 'components.deckgl.layers.economicCenters',
+      economic: SITE_VARIANT === 'media' ? 'components.deckgl.layers.mediaDemands' : 'components.deckgl.layers.economicCenters',
       waterways: 'components.deckgl.layers.strategicWaterways',
       startupHubs: 'components.deckgl.layers.startupHubs',
       cloudRegions: 'components.deckgl.layers.cloudRegions',
       accelerators: 'components.deckgl.layers.accelerators',
       techHQs: 'components.deckgl.layers.techHQs',
-      techEvents: 'components.deckgl.layers.techEvents',
+      techEvents: SITE_VARIANT === 'media' ? 'components.deckgl.layers.mediaEvents' : 'components.deckgl.layers.techEvents',
       stockExchanges: 'components.deckgl.layers.stockExchanges',
       financialCenters: 'components.deckgl.layers.financialCenters',
       centralBanks: 'components.deckgl.layers.centralBanks',
