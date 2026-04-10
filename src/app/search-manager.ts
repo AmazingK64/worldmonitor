@@ -13,6 +13,7 @@ import { calculateCII, TIER1_COUNTRIES } from '@/services/country-instability';
 import { CURATED_COUNTRIES } from '@/config/countries';
 import { getCountryBbox } from '@/services/country-geometry';
 import { INTEL_HOTSPOTS, CONFLICT_ZONES, MILITARY_BASES, UNDERSEA_CABLES, NUCLEAR_FACILITIES } from '@/config/geo';
+import { MEDIA_HOTSPOTS } from '@/config/media-geo';
 import { PIPELINES } from '@/config/pipelines';
 import { AI_DATA_CENTERS } from '@/config/ai-datacenters';
 import { GAMMA_IRRADIATORS } from '@/config/irradiators';
@@ -121,7 +122,8 @@ export class SearchManager implements AppModule {
         data: a,
       })));
     } else {
-      this.ctx.searchModal.registerSource('hotspot', INTEL_HOTSPOTS.map(h => ({
+      const hotspotData = SITE_VARIANT === 'media' ? MEDIA_HOTSPOTS : INTEL_HOTSPOTS;
+      this.ctx.searchModal.registerSource('hotspot', hotspotData.map(h => ({
         id: h.id,
         title: h.name,
         subtitle: `${h.subtext || ''} ${h.keywords?.join(' ') || ''} ${h.description || ''}`.trim(),

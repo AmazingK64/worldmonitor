@@ -1,6 +1,3 @@
-import { type AuthSession, getAuthState, subscribeAuthState } from '@/services/auth-state';
-import { openSignIn } from '@/services/clerk';
-import { PanelGateReason, getPanelGateReason } from '@/services/panel-gating';
 import { getResilienceScore, type ResilienceDomain, type ResilienceScoreResponse } from '@/services/resilience';
 import { h, replaceChildren } from '@/utils/dom-utils';
 import {
@@ -12,23 +9,6 @@ import {
   getResilienceVisualLevel,
 } from './resilience-widget-utils';
 import type { CountryEnergyProfileData } from './CountryBriefPanel';
-
-const LOCKED_PREVIEW: ResilienceScoreResponse = {
-  countryCode: 'US',
-  overallScore: 73,
-  level: 'high',
-  domains: [
-    { id: 'economic', score: 82, weight: 0.22, dimensions: [] },
-    { id: 'infrastructure', score: 68, weight: 0.2, dimensions: [] },
-    { id: 'energy', score: 88, weight: 0.15, dimensions: [] },
-    { id: 'social-governance', score: 71, weight: 0.25, dimensions: [] },
-    { id: 'health-food', score: 54, weight: 0.18, dimensions: [] },
-  ],
-  trend: 'rising',
-  change30d: 2.4,
-  lowConfidence: false,
-  imputationShare: 0,
-};
 
 function normalizeCountryCode(countryCode: string | null | undefined): string | null {
   const normalized = String(countryCode || '').trim().toUpperCase();
@@ -42,8 +22,6 @@ function clampScore(score: number): number {
 
 export class ResilienceWidget {
   private readonly element: HTMLElement;
-  private authState: AuthSession = getAuthState();
-  private unsubscribeAuth: (() => void) | null = null;
   private currentCountryCode: string | null = null;
   private currentData: ResilienceScoreResponse | null = null;
   private loading = false;
@@ -54,16 +32,6 @@ export class ResilienceWidget {
   constructor(countryCode?: string | null) {
     this.element = document.createElement('section');
     this.element.className = 'cdp-card resilience-widget';
-    this.unsubscribeAuth = subscribeAuthState((state) => {
-      this.authState = state;
-      const gateReason = this.getGateReason();
-      if (gateReason === PanelGateReason.NONE && this.currentCountryCode && !this.loading && this.currentData?.countryCode !== this.currentCountryCode) {
-        void this.refresh();
-        return;
-      }
-      this.render();
-    });
-
     this.setCountryCode(countryCode ?? null);
   }
 
@@ -96,11 +64,6 @@ export class ResilienceWidget {
       return;
     }
 
-    if (this.authState.isPending || this.getGateReason() !== PanelGateReason.NONE) {
-      this.render();
-      return;
-    }
-
     const requestVersion = ++this.requestVersion;
     this.loading = true;
     this.errorMessage = null;
@@ -129,17 +92,10 @@ export class ResilienceWidget {
 
   public destroy(): void {
     this.requestVersion += 1;
-    this.unsubscribeAuth?.();
-    this.unsubscribeAuth = null;
-  }
-
-  private getGateReason(): PanelGateReason {
-    return getPanelGateReason(this.authState, true);
   }
 
   private render(): void {
-    const gateReason = this.getGateReason();
-    const body = this.renderBody(gateReason);
+    const body = this.renderBody();
 
     replaceChildren(
       this.element,
@@ -161,17 +117,9 @@ export class ResilienceWidget {
     );
   }
 
-  private renderBody(gateReason: PanelGateReason): HTMLElement {
+  private renderBody(): HTMLElement {
     if (!this.currentCountryCode) {
       return h('div', { className: 'cdp-card-body' }, this.makeEmpty('Resilience data loads when a country is selected.'));
-    }
-
-    if (this.authState.isPending) {
-      return h('div', { className: 'cdp-card-body' }, this.makeLoading('Checking access…'));
-    }
-
-    if (gateReason !== PanelGateReason.NONE) {
-      return this.renderLocked(gateReason);
     }
 
     if (this.loading) {
@@ -187,35 +135,6 @@ export class ResilienceWidget {
     }
 
     return this.renderScoreCard(this.currentData);
-  }
-
-  private renderLocked(gateReason: PanelGateReason): HTMLElement {
-    const description = gateReason === PanelGateReason.ANONYMOUS
-      ? 'Sign in to unlock premium resilience scores.'
-      : 'Resilience scores are unavailable in the current build.';
-    const cta = gateReason === PanelGateReason.ANONYMOUS ? 'Sign In' : '';
-
-    const preview = this.renderScoreCard(LOCKED_PREVIEW, true);
-    preview.classList.add('resilience-widget__preview');
-
-    const children: HTMLElement[] = [
-      preview,
-      h('div', { className: 'panel-locked-desc resilience-widget__gate-desc' }, description),
-    ];
-    if (gateReason === PanelGateReason.ANONYMOUS) {
-      const button = h('button', {
-        type: 'button',
-        className: 'panel-locked-cta resilience-widget__cta',
-        onclick: () => openSignIn(),
-      }, cta) as HTMLButtonElement;
-      children.push(button);
-    }
-
-    return h(
-      'div',
-      { className: 'cdp-card-body resilience-widget__locked' },
-      ...children,
-    );
   }
 
   private renderError(message: string): HTMLElement {

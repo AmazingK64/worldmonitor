@@ -15,7 +15,8 @@
   <a href="https://tech.worldmonitor.app"><img src="https://img.shields.io/badge/Tech_Variant-tech.worldmonitor.app-0891b2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Tech Variant"></a>&nbsp;
   <a href="https://finance.worldmonitor.app"><img src="https://img.shields.io/badge/Finance_Variant-finance.worldmonitor.app-059669?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Finance Variant"></a>&nbsp;
   <a href="https://commodity.worldmonitor.app"><img src="https://img.shields.io/badge/Commodity_Variant-commodity.worldmonitor.app-b45309?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Commodity Variant"></a>&nbsp;
-  <a href="https://happy.worldmonitor.app"><img src="https://img.shields.io/badge/Happy_Variant-happy.worldmonitor.app-f59e0b?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Happy Variant"></a>
+  <a href="https://happy.worldmonitor.app"><img src="https://img.shields.io/badge/Happy_Variant-happy.worldmonitor.app-f59e0b?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Happy Variant"></a>&nbsp;
+  <a href="https://media.worldmonitor.app"><img src="https://img.shields.io/badge/Media_Variant-media.worldmonitor.app-e11d48?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Media Variant"></a>
 </p>
 
 <p align="center">
@@ -43,9 +44,19 @@
 - **Country Intelligence Index** — composite risk scoring across 12 signal categories
 - **Finance radar** — 92 stock exchanges, commodities, crypto, and 7-signal market composite
 - **Local AI** — run everything with Ollama, no API keys required
-- **5 site variants** from a single codebase (world, tech, finance, commodity, happy)
+- **6 site variants** from a single codebase (world, tech, finance, commodity, happy, media)
 - **Native desktop app** (Tauri 2) for macOS, Windows, and Linux
 - **21 languages** with native-language feeds and RTL support
+- **Media industry variant** — Tavily-powered news search, AI-generated news predictions, and location-based AI insights for media professionals
+
+### Media Industry Variant
+
+The **Media variant** transforms World Monitor into a specialized tool for monitoring media industry dynamics across Asia:
+
+- **Tavily News Integration** — Real-time media industry news via Tavily Search API, covering press, broadcasting, digital platforms, and entertainment sectors
+- **AI News Predictions** — Short, focused trend analyses generated from current media news for rapid insight consumption
+- **Location-based AI Insights** — Click any news point on the map to receive AI-generated explanations of why the story matters and its potential impact
+- **22+ Media-specific RSS Feeds** — Curated news sources across 6 media subcategories (press agencies, digital media, entertainment, broadcasting, sports media, advertising/PR)
 
 For the full feature list, architecture, data sources, and algorithms, see the **[documentation](https://www.worldmonitor.app/docs/documentation)**.
 
@@ -69,6 +80,7 @@ npm run dev:tech       # tech.worldmonitor.app
 npm run dev:finance    # finance.worldmonitor.app
 npm run dev:commodity  # commodity.worldmonitor.app
 npm run dev:happy      # happy.worldmonitor.app
+npm run dev:media      # media.worldmonitor.app
 ```
 
 See the **[self-hosting guide](https://www.worldmonitor.app/docs/getting-started)** for deployment options (Vercel, Docker, static).

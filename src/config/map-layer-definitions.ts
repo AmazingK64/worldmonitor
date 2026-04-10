@@ -219,11 +219,47 @@ export const LAYER_SYNONYMS: Record<string, Array<keyof MapLayers>> = {
   webcam: ['webcams'],
   camera: ['webcams'],
   livecam: ['webcams'],
+  // Media variant Chinese synonyms — enable searching with Chinese keywords
+  媒体: ['hotspots', 'economic', 'techEvents'],
+  传媒: ['hotspots', 'economic', 'techEvents'],
+  热点: ['hotspots'],
+  媒体热点: ['hotspots'],
+  选题: ['hotspots'],
+  舆情: ['hotspots'],
+  需求: ['economic'],
+  媒体需求: ['economic'],
+  内容需求: ['economic'],
+  平台: ['economic'],
+  受众: ['economic'],
+  广告: ['economic'],
+  活动: ['techEvents'],
+  媒体活动: ['techEvents'],
+  展会: ['techEvents'],
+  电影节: ['techEvents'],
+  传媒展: ['techEvents'],
+  抖音: ['economic'],
+  微信: ['economic'],
+  B站: ['economic'],
+  小红书: ['economic'],
+  快手: ['economic'],
+  视频: ['economic'],
+  短视频: ['economic'],
+  流媒体: ['economic'],
+  新闻: ['hotspots'],
+  出版: ['hotspots'],
+  动漫: ['hotspots'],
+  韩流: ['hotspots'],
 };
 
 export function resolveLayerLabel(def: LayerDefinition, tFn?: (key: string) => string): string {
   const variant = ((typeof document !== 'undefined' ? document.documentElement?.dataset?.variant : '') || 'full') as MapVariant;
   const variantFallback = def.variantFallbackLabels?.[variant];
+  // For media variant, also check i18n keys like mediaHotspots / mediaDemands / mediaEvents
+  if (variant === 'media' && tFn) {
+    const mediaI18nKey = I18N_PREFIX + 'media' + def.i18nSuffix.charAt(0).toUpperCase() + def.i18nSuffix.slice(1);
+    const mediaTranslated = tFn(mediaI18nKey);
+    if (mediaTranslated && mediaTranslated !== mediaI18nKey) return mediaTranslated;
+  }
   if (tFn) {
     const translated = tFn(I18N_PREFIX + def.i18nSuffix);
     if (translated && translated !== I18N_PREFIX + def.i18nSuffix && !variantFallback) return translated;

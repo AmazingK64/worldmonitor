@@ -38,6 +38,8 @@ import {
   ACCELERATORS,
   TECH_HQS,
   CLOUD_REGIONS,
+  MEDIA_HOTSPOTS,
+  MEDIA_DEMANDS,
   // Finance variant data
   STOCK_EXCHANGES,
   FINANCIAL_CENTERS,
@@ -175,7 +177,7 @@ export class MapComponent {
   constructor(container: HTMLElement, initialState: MapState) {
     this.container = container;
     this.state = initialState;
-    this.hotspots = [...INTEL_HOTSPOTS];
+    this.hotspots = [...(SITE_VARIANT === 'media' ? MEDIA_HOTSPOTS : INTEL_HOTSPOTS)];
 
     this.wrapper = document.createElement('div');
     this.wrapper.className = 'map-wrapper';
@@ -404,7 +406,16 @@ export class MapComponent {
     const happyLayers: (keyof MapLayers)[] = [
       'positiveEvents', 'kindness', 'happiness', 'speciesRecovery', 'renewableInstallations',
     ];
-    const layers = SITE_VARIANT === 'tech' ? techLayers : SITE_VARIANT === 'finance' ? financeLayers : SITE_VARIANT === 'happy' ? happyLayers : fullLayers;
+    const mediaLayers: (keyof MapLayers)[] = [
+      'hotspots',                                          // 媒体热点
+      'weather',                                           // 天气预警
+      'outages',                                           // 互联网中断
+      'economic',                                          // 媒体需求
+      'techEvents',                                        // 媒体活动
+      'datacenters',                                       // 数据中心
+      'cables',                                            // 海底电缆
+    ];
+    const layers = SITE_VARIANT === 'tech' ? techLayers : SITE_VARIANT === 'finance' ? financeLayers : SITE_VARIANT === 'happy' ? happyLayers : SITE_VARIANT === 'media' ? mediaLayers : fullLayers;
     const layerLabelKeys: Partial<Record<keyof MapLayers, string>> = {
       hotspots: 'components.deckgl.layers.intelHotspots',
       conflicts: 'components.deckgl.layers.conflictZones',
@@ -1642,7 +1653,8 @@ export class MapComponent {
 
     // Economic Centers (always HTML - emoji icons for type distinction)
     if (this.state.layers.economic) {
-      ECONOMIC_CENTERS.forEach((center) => {
+      const economicData = SITE_VARIANT === 'media' ? MEDIA_DEMANDS : ECONOMIC_CENTERS;
+      economicData.forEach((center) => {
         const pos = projection([center.lon, center.lat]);
         if (!pos) return;
 

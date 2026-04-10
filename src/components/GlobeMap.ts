@@ -18,6 +18,7 @@ import Globe from 'globe.gl';
 import { isDesktopRuntime } from '@/services/runtime';
 import type { GlobeInstance, ConfigOptions } from 'globe.gl';
 import { INTEL_HOTSPOTS, CONFLICT_ZONES, MILITARY_BASES, NUCLEAR_FACILITIES, SPACEPORTS, ECONOMIC_CENTERS, STRATEGIC_WATERWAYS, CRITICAL_MINERALS, UNDERSEA_CABLES } from '@/config/geo';
+import { MEDIA_HOTSPOTS, MEDIA_DEMANDS, MEDIA_EVENTS } from '@/config/media-geo';
 import { PIPELINES } from '@/config/pipelines';
 import { t } from '@/services/i18n';
 import { SITE_VARIANT } from '@/config/variant';
@@ -886,7 +887,7 @@ export class GlobeMap {
     this.createLayerToggles();
 
     // Load static datasets
-    this.setHotspots(INTEL_HOTSPOTS);
+    this.setHotspots(SITE_VARIANT === 'media' ? MEDIA_HOTSPOTS : INTEL_HOTSPOTS);
     this.initStaticLayers();
     this.setConflictZones();
 
@@ -2189,7 +2190,8 @@ export class GlobeMap {
         break;
       case 'economic':
         if (!this.economicMarkers.length) {
-          this.economicMarkers = (ECONOMIC_CENTERS as EconomicCenter[]).map(c => ({
+          const economicData = SITE_VARIANT === 'media' ? MEDIA_DEMANDS : ECONOMIC_CENTERS;
+          this.economicMarkers = (economicData as EconomicCenter[]).map(c => ({
             _kind: 'economic' as const,
             _lat: c.lat,
             _lng: c.lon,
@@ -3248,15 +3250,31 @@ export class GlobeMap {
     this.flushPaths();
   }
   public setTechEvents(events: Array<{ id: string; title: string; lat: number; lng: number; country: string; daysUntil: number; [key: string]: any }>): void {
-    this.techMarkers = (events ?? []).filter(e => e.lat != null && e.lng != null).map(e => ({
-      _kind: 'tech' as const,
-      _lat: e.lat,
-      _lng: e.lng,
-      id: e.id,
-      title: e.title ?? '',
-      country: e.country ?? '',
-      daysUntil: e.daysUntil ?? 0,
-    }));
+    // Media variant uses static MEDIA_EVENTS data instead of dynamic API data
+    if (SITE_VARIANT === 'media' && MEDIA_EVENTS.length > 0) {
+      const flatEvents = MEDIA_EVENTS.flatMap(cluster =>
+        cluster.items.map(item => ({
+          _kind: 'tech' as const,
+          _lat: item.lat,
+          _lng: item.lng,
+          id: item.id,
+          title: item.title ?? '',
+          country: item.country ?? '',
+          daysUntil: item.daysUntil ?? 0,
+        }))
+      );
+      this.techMarkers = flatEvents;
+    } else {
+      this.techMarkers = (events ?? []).filter(e => e.lat != null && e.lng != null).map(e => ({
+        _kind: 'tech' as const,
+        _lat: e.lat,
+        _lng: e.lng,
+        id: e.id,
+        title: e.title ?? '',
+        country: e.country ?? '',
+        daysUntil: e.daysUntil ?? 0,
+      }));
+    }
     this.flushMarkers();
   }
   public onHotspotClicked(cb: (h: Hotspot) => void): void { this.onHotspotClickCb = cb; }

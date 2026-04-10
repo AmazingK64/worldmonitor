@@ -124,6 +124,13 @@ export {
   type CommodityHub,
 } from './finance-geo';
 
+// Media variant - media-industry geographic data
+export {
+  MEDIA_HOTSPOTS,
+  MEDIA_DEMANDS,
+  MEDIA_EVENTS,
+} from './media-geo';
+
 // Gulf FDI investment database
 export { GULF_INVESTMENTS } from './gulf-fdi';
 

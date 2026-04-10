@@ -93,6 +93,9 @@ import {
   PROCESSING_PLANTS,
   COMMODITY_PORTS as COMMODITY_GEO_PORTS,
   SANCTIONED_COUNTRIES_ALPHA2,
+  MEDIA_HOTSPOTS,
+  MEDIA_DEMANDS,
+  MEDIA_EVENTS,
 } from '@/config';
 import type { GulfInvestment } from '@/types';
 import { resolveTradeRouteSegments, TRADE_ROUTES as TRADE_ROUTES_LIST, type TradeRouteSegment } from '@/config/trade-routes';
@@ -508,7 +511,7 @@ export class DeckGLMap {
       pan: { ...initialState.pan },
       layers: normalizeExclusiveChoropleths(initialState.layers, null),
     };
-    this.hotspots = [...INTEL_HOTSPOTS];
+    this.hotspots = [...(SITE_VARIANT === 'media' ? MEDIA_HOTSPOTS : INTEL_HOTSPOTS)];
 
     this.debouncedRebuildLayers = debounce(() => {
       if (this.renderPaused || this.webglLost || !this.maplibreMap) return;
@@ -1686,8 +1689,12 @@ export class DeckGLMap {
       if (mapLayers.cloudRegions) {
         layers.push(this.createCloudRegionsLayer());
       }
-      if (mapLayers.techEvents && this.techEvents.length > 0) {
-        layers.push(...this.createTechEventClusterLayers());
+      if (mapLayers.techEvents) {
+        if (SITE_VARIANT === 'media' && MEDIA_EVENTS.length > 0) {
+          layers.push(...this.createMediaEventClusterLayers());
+        } else if (this.techEvents.length > 0) {
+          layers.push(...this.createTechEventClusterLayers());
+        }
       }
     }
 
@@ -2650,9 +2657,10 @@ export class DeckGLMap {
   }
 
   private createEconomicCentersLayer(): ScatterplotLayer {
+    const data = SITE_VARIANT === 'media' ? MEDIA_DEMANDS : ECONOMIC_CENTERS;
     return new ScatterplotLayer({
       id: 'economic-centers-layer',
-      data: ECONOMIC_CENTERS,
+      data,
       getPosition: (d) => [d.lon, d.lat],
       getRadius: 8000,
       getFillColor: [255, 215, 0, 180] as [number, number, number, number],
@@ -3037,6 +3045,48 @@ export class DeckGLMap {
     }
 
     layers.push(this.createEmptyGhost('tech-event-clusters-layer'));
+    return layers;
+  }
+
+  /** Media variant event clusters — uses MEDIA_EVENTS static data (no supercluster). */
+  private createMediaEventClusterLayers(): Layer[] {
+    const layers: Layer[] = [];
+
+    layers.push(new ScatterplotLayer<MapTechEventCluster>({
+      id: 'media-event-clusters-layer',
+      data: MEDIA_EVENTS,
+      getPosition: d => [d.lon, d.lat],
+      getRadius: d => 10000 + d.count * 1500,
+      radiusMinPixels: 5,
+      radiusMaxPixels: 18,
+      getFillColor: d => {
+        if (d.soonestDaysUntil <= 14) return [255, 120, 50, 220] as [number, number, number, number];
+        if (d.soonestDaysUntil <= 60) return [255, 200, 50, 200] as [number, number, number, number];
+        return [160, 80, 255, 180] as [number, number, number, number];
+      },
+      pickable: true,
+    }));
+
+    const multiClusters = MEDIA_EVENTS.filter(c => c.count > 1);
+    if (multiClusters.length > 0) {
+      layers.push(new TextLayer<MapTechEventCluster>({
+        id: 'media-event-clusters-badge',
+        data: multiClusters,
+        getText: d => String(d.count),
+        getPosition: d => [d.lon, d.lat],
+        background: true,
+        getBackgroundColor: [0, 0, 0, 180],
+        backgroundPadding: [4, 2, 4, 2],
+        getColor: [255, 255, 255, 255],
+        getSize: 12,
+        getPixelOffset: [0, -14],
+        pickable: false,
+        fontFamily: 'system-ui, sans-serif',
+        fontWeight: 700,
+      }));
+    }
+
+    layers.push(this.createEmptyGhost('media-event-clusters-layer'));
     return layers;
   }
 

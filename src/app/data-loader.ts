@@ -14,6 +14,7 @@ import {
   LAYER_TO_SOURCE,
 } from '@/config';
 import { INTEL_HOTSPOTS, CONFLICT_ZONES } from '@/config/geo';
+import { MEDIA_EVENTS } from '@/config/media-geo';
 import { tokenizeForMatch, matchKeyword } from '@/utils/keyword-match';
 import {
   fetchCategoryFeeds,
@@ -1747,6 +1748,39 @@ export class DataLoaderManager implements AppModule {
 
   async loadTechEvents(): Promise<void> {
     console.log('[loadTechEvents] Called. SITE_VARIANT:', SITE_VARIANT, 'techEvents layer:', this.ctx.mapLayers.techEvents);
+
+    // Media variant uses static MEDIA_EVENTS data — skip API call entirely
+    if (SITE_VARIANT === 'media') {
+      const now = new Date();
+      const flatEvents = MEDIA_EVENTS.flatMap(cluster =>
+        cluster.items.map(item => ({
+          id: item.id,
+          title: item.title,
+          location: item.location,
+          lat: item.lat,
+          lng: item.lng,
+          country: item.country,
+          startDate: item.startDate,
+          endDate: item.endDate,
+          url: item.url,
+          daysUntil: Math.ceil((new Date(item.startDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
+        }))
+      );
+      this.ctx.map?.setTechEvents(flatEvents);
+      this.ctx.map?.setLayerReady('techEvents', flatEvents.length > 0);
+      this.ctx.statusPanel?.updateFeed('Tech Events', { status: 'ok', itemCount: flatEvents.length });
+
+      if (this.ctx.searchModal) {
+        this.ctx.searchModal.registerSource('techevent', flatEvents.map(e => ({
+          id: e.id,
+          title: e.title,
+          subtitle: `${e.location} • ${new Date(e.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,
+          data: e,
+        })));
+      }
+      return;
+    }
+
     if (SITE_VARIANT !== 'tech' && !this.ctx.mapLayers.techEvents) {
       console.log('[loadTechEvents] Skipping - not tech variant and layer disabled');
       return;
