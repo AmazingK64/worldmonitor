@@ -429,6 +429,7 @@ export class MapPopup {
     this.aiBriefAbortController?.abort();
     this.aiBriefAbortController = null;
     this.aiBriefRequestId += 1;
+    this.clearTypewriter();
 
     if (this.outsideListenerTimeoutId !== null) {
       window.clearTimeout(this.outsideListenerTimeoutId);
@@ -461,6 +462,8 @@ export class MapPopup {
     this.repairShips = repairShips;
   }
 
+  private typewriterTimer: ReturnType<typeof setTimeout> | null = null;
+
   private attachAiBrief(popupData: PopupData): void {
     const popupBody = this.popup?.querySelector('.popup-body');
     const aiInput = popupBody ? this.buildAiBriefInput(popupData) : null;
@@ -473,13 +476,15 @@ export class MapPopup {
         <span class="popup-ai-brief-title">${escapeHtml(t('popups.aiBrief.title'))}</span>
         <span class="popup-ai-brief-meta"></span>
       </div>
-      <p class="popup-ai-brief-content loading">${escapeHtml(t('popups.aiBrief.loading'))}</p>
+      <p class="popup-ai-brief-content loading"><span class="ai-typewriter-text"></span><span class="ai-typewriter-cursor"></span></p>
     `;
     popupBody.prepend(section);
 
     const contentEl = section.querySelector('.popup-ai-brief-content');
+    const textEl = section.querySelector('.ai-typewriter-text');
+    const cursorEl = section.querySelector('.ai-typewriter-cursor');
     const metaEl = section.querySelector('.popup-ai-brief-meta');
-    if (!contentEl || !metaEl) return;
+    if (!contentEl || !textEl || !cursorEl || !metaEl) return;
 
     const requestId = ++this.aiBriefRequestId;
     this.aiBriefAbortController?.abort();
@@ -493,19 +498,46 @@ export class MapPopup {
     ).then((result) => {
       if (!this.popup || requestId !== this.aiBriefRequestId) return;
       if (!result) {
-        contentEl.textContent = t('popups.aiBrief.unavailable');
+        this.clearTypewriter();
+        textEl.textContent = t('popups.aiBrief.unavailable');
         contentEl.classList.remove('loading');
+        cursorEl.classList.add('hidden');
         return;
       }
-      contentEl.textContent = result.summary;
       contentEl.classList.remove('loading');
       metaEl.textContent = `${t('popups.aiBrief.sourceLabel')}: ${result.model || result.provider}`;
+      this.animateTypewriter(textEl, cursorEl, result.summary);
     }).catch((error) => {
       if (error instanceof DOMException && error.name === 'AbortError') return;
       if (!this.popup || requestId !== this.aiBriefRequestId) return;
-      contentEl.textContent = t('popups.aiBrief.unavailable');
+      this.clearTypewriter();
+      textEl.textContent = t('popups.aiBrief.unavailable');
       contentEl.classList.remove('loading');
+      cursorEl.classList.add('hidden');
     });
+  }
+
+  private animateTypewriter(textEl: Element, cursorEl: Element, text: string): void {
+    this.clearTypewriter();
+    let index = 0;
+    const speed = 18;
+    const tick = () => {
+      if (index < text.length) {
+        textEl.textContent += text[index];
+        index++;
+        this.typewriterTimer = setTimeout(tick, speed);
+      } else {
+        cursorEl.classList.add('hidden');
+      }
+    };
+    tick();
+  }
+
+  private clearTypewriter(): void {
+    if (this.typewriterTimer !== null) {
+      clearTimeout(this.typewriterTimer);
+      this.typewriterTimer = null;
+    }
   }
 
   private buildAiBriefInput(popupData: PopupData): { headlines: string[]; geoContext: string } | null {
@@ -911,7 +943,7 @@ export class MapPopup {
     ` : '';
 
     return `
-      <div class="popup-header hotspot">
+      <div class="popup-header hotspot-header">
         <span class="popup-title">${escapeHtml(hotspot.name.toUpperCase())}</span>
         <span class="popup-badge ${severityClass}">${severityLabel}</span>
         <button class="popup-close" aria-label="Close">×</button>

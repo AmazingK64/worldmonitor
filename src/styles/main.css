@@ -6982,7 +6982,7 @@ a.prediction-link:hover {
   background: rgba(255, 68, 68, 0.06);
 }
 
-.popup-header.hotspot {
+.popup-header.hotspot-header {
   background: rgba(68, 255, 136, 0.06);
 }
 
@@ -7006,7 +7006,7 @@ a.prediction-link:hover {
   white-space: nowrap;
 }
 
-.popup-header.hotspot .popup-title {
+.popup-header.hotspot-header .popup-title {
   color: var(--green);
 }
 
@@ -7166,6 +7166,25 @@ a.prediction-link:hover {
 
 .popup-ai-brief-content.loading {
   color: var(--text-muted);
+}
+
+.ai-typewriter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--green, #22c55e);
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: ai-cursor-blink 0.8s step-end infinite;
+}
+
+.ai-typewriter-cursor.hidden {
+  display: none;
+}
+
+@keyframes ai-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .popup-subtitle {
