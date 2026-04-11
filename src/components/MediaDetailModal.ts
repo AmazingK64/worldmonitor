@@ -27,6 +27,7 @@ export class MediaDetailModal {
   private escHandler = (event: KeyboardEvent) => {
     if (event.key === 'Escape') this.hide();
   };
+  private typewriterTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.overlay = document.createElement('div');
@@ -38,6 +39,8 @@ export class MediaDetailModal {
   }
 
   public show(options: MediaDetailModalOptions): void {
+    this.clearTypewriter();
+
     this.overlay.innerHTML = `
       <div class="modal" style="max-width:680px;border-radius:16px;padding:0;overflow:hidden">
         <div class="modal-header" style="padding:18px 20px 12px;border-bottom:1px solid var(--border);align-items:flex-start">
@@ -77,7 +80,7 @@ export class MediaDetailModal {
           ` : ''}
           <section style="display:grid;gap:8px">
             <div style="font-size:12px;font-weight:700">${escapeHtml(options.analysisTitle || 'AI 分析')}</div>
-            <div data-media-analysis-body style="padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,0.03);font-size:12px;line-height:1.7;color:var(--text-dim);white-space:pre-wrap">${escapeHtml(options.analysisLoadingText || 'AI 正在分析中...')}</div>
+            <div data-media-analysis-body style="padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,0.03);font-size:12px;line-height:1.7;color:var(--text-dim);white-space:pre-wrap"><span class="ai-typewriter-text">${escapeHtml(options.analysisLoadingText || 'AI 正在分析中...')}</span><span class="ai-typewriter-cursor"></span></div>
           </section>
         </div>
       </div>
@@ -88,20 +91,48 @@ export class MediaDetailModal {
     document.addEventListener('keydown', this.escHandler);
 
     const analysisBody = this.overlay.querySelector<HTMLElement>('[data-media-analysis-body]');
-    if (analysisBody && options.analysisPromise) {
+    const textEl = analysisBody?.querySelector('.ai-typewriter-text');
+    const cursorEl = analysisBody?.querySelector('.ai-typewriter-cursor');
+    if (analysisBody && textEl && cursorEl && options.analysisPromise) {
       options.analysisPromise
         .then((text) => {
           if (!this.overlay.classList.contains('active')) return;
-          analysisBody.textContent = text;
+          textEl.textContent = '';
+          this.animateTypewriter(textEl, cursorEl, text);
         })
         .catch(() => {
           if (!this.overlay.classList.contains('active')) return;
-          analysisBody.textContent = '当前无法生成 AI 分析，已显示基础内容供继续判断。';
+          textEl.textContent = '当前无法生成 AI 分析，已显示基础内容供继续判断。';
+          cursorEl.classList.add('hidden');
         });
     }
   }
 
+  private animateTypewriter(textEl: Element, cursorEl: Element, text: string): void {
+    this.clearTypewriter();
+    let index = 0;
+    const speed = 18;
+    const tick = () => {
+      if (index < text.length) {
+        textEl.textContent += text[index];
+        index++;
+        this.typewriterTimer = setTimeout(tick, speed);
+      } else {
+        cursorEl.classList.add('hidden');
+      }
+    };
+    tick();
+  }
+
+  private clearTypewriter(): void {
+    if (this.typewriterTimer !== null) {
+      clearTimeout(this.typewriterTimer);
+      this.typewriterTimer = null;
+    }
+  }
+
   public hide(): void {
+    this.clearTypewriter();
     this.overlay.classList.remove('active');
     this.overlay.innerHTML = '';
     document.removeEventListener('keydown', this.escHandler);

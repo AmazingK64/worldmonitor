@@ -51,6 +51,20 @@ export const MODEL_CONFIGS: ModelConfig[] = [
     task: 'text2text-generation',
   },
   {
+    id: 'summarization-multilingual',
+    name: 'mT5-XLSum-multilingual',
+    // NOTE: This model requires ONNX conversion before it can be used in the browser.
+    // Run `python scripts/convert-xlsum-onnx.py --quantize int8 --upload <your-hf-username>/mt5-xlsum-onnx`
+    // Then update this hfModel to your uploaded repo ID.
+    // The original PyTorch model at `csebuetnlp/mT5_multilingual_XLSum` cannot be loaded
+    // directly by @xenova/transformers — it needs ONNX weights.
+    hfModel: 'csebuetnlp/mT5_multilingual_XLSum',
+    size: 300_000_000,
+    priority: 3,
+    required: false,
+    task: 'text2text-generation',
+  },
+  {
     id: 'ner',
     name: 'BERT-NER',
     hfModel: 'Xenova/bert-base-NER',
@@ -60,6 +74,39 @@ export const MODEL_CONFIGS: ModelConfig[] = [
     task: 'token-classification',
   },
 ];
+
+/**
+ * Languages that require the multilingual summarization model
+ * instead of the English-only Flan-T5.
+ */
+export const MULTILINGUAL_SUMMARY_LANGS = new Set([
+  'zh', // Chinese
+  'ja', // Japanese
+  'ko', // Korean
+  'ar', // Arabic
+  'ru', // Russian
+  'hi', // Hindi
+  'bn', // Bengali
+  'th', // Thai
+  'vi', // Vietnamese
+  'id', // Indonesian
+  'ms', // Malay
+  'tr', // Turkish
+  'fa', // Persian
+  'he', // Hebrew
+  'uk', // Ukrainian
+]);
+
+/**
+ * Return the best summarization model ID for the given UI language.
+ * Multilingual languages use the mT5-XLSum model; others use Flan-T5.
+ */
+export function getSummarizationModelId(lang: string): string {
+  if (MULTILINGUAL_SUMMARY_LANGS.has(lang)) {
+    return 'summarization-multilingual';
+  }
+  return 'summarization-beta';
+}
 
 export const ML_FEATURE_FLAGS = {
   semanticClustering: true,

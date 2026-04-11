@@ -50,9 +50,10 @@ import type { CotPositioningPanel } from '@/components/CotPositioningPanel';
 import { isDesktopRuntime, waitForSidecarReady } from '@/services/runtime';
 import { hasPremiumAccess } from '@/services/panel-gating';
 import { BETA_MODE } from '@/config/beta';
+import { getSummarizationModelId } from '@/config/ml-config';
 import { trackEvent, trackDeeplinkOpened, initAuthAnalytics } from '@/services/analytics';
 import { preloadCountryGeometry, getCountryNameByCode } from '@/services/country-geometry';
-import { initI18n, t } from '@/services/i18n';
+import { initI18n, t, getCurrentLanguage } from '@/services/i18n';
 
 import { computeDefaultDisabledSources, getLocaleBoostedSources, getTotalFeedCount, FEEDS, INTEL_SOURCES } from '@/config/feeds';
 import { fetchBootstrapData, getBootstrapHydrationState, markBootstrapAsLive, type BootstrapHydrationState } from '@/services/bootstrap';
@@ -776,7 +777,11 @@ export class App {
     const aiFlow = getAiFlowSettings();
     if (aiFlow.browserModel || isDesktopRuntime()) {
       await mlWorker.init();
-      if (BETA_MODE) mlWorker.loadModel('summarization-beta').catch(() => { });
+      if (BETA_MODE) {
+        // Load the appropriate summarization model based on UI language
+        const sumModelId = getSummarizationModelId(getCurrentLanguage());
+        mlWorker.loadModel(sumModelId).catch(() => { });
+      }
     }
 
     if (aiFlow.headlineMemory) {

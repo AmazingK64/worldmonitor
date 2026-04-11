@@ -40,6 +40,7 @@ interface SummarizeMessage {
   id: string;
   texts: string[];
   modelId?: string;
+  lang?: string;
 }
 
 interface SentimentMessage {
@@ -193,18 +194,29 @@ async function embedTexts(texts: string[]): Promise<number[][]> {
   return results;
 }
 
-async function summarizeTexts(texts: string[], modelId = 'summarization'): Promise<string[]> {
+async function summarizeTexts(texts: string[], modelId = 'summarization', lang = 'en'): Promise<string[]> {
   if (!isSupportedModelId(modelId)) {
     throw new Error(`Unknown model: ${modelId}`);
   }
   await loadModel(modelId);
   const pipe = loadedPipelines.get(modelId)!;
 
+  const isMultilingual = modelId === 'summarization-multilingual';
+
   const results: string[] = [];
   for (const text of texts) {
-    const output = await pipe(`summarize: ${text}`, {
-      max_new_tokens: 64,
+    // mT5-multilingual-XLSum uses "summarize: " prefix for all languages
+    // Flan-T5 uses "summarize: " prefix for English/French only
+    const prefix = isMultilingual ? 'summarize: ' : 'summarize: ';
+    const input = `${prefix}${text}`;
+
+    const output = await pipe(input, {
+      max_new_tokens: isMultilingual ? 84 : 64,
       min_length: 10,
+      // mT5-XLSum benefits from beam search for better quality
+      num_beams: isMultilingual ? 4 : 1,
+      length_penalty: isMultilingual ? 0.6 : 1.0,
+      no_repeat_ngram_size: isMultilingual ? 3 : 0,
     });
     const result = (output as Array<{ generated_text: string }>)[0];
     results.push(result?.generated_text ?? '');
@@ -377,7 +389,7 @@ self.onmessage = async (event: MessageEvent<MLWorkerMessage>) => {
       }
 
       case 'summarize': {
-        const summaries = await summarizeTexts(message.texts, message.modelId);
+        const summaries = await summarizeTexts(message.texts, message.modelId, message.lang);
         self.postMessage({
           type: 'summarize-result',
           id: message.id,

@@ -14,6 +14,7 @@ import { BETA_MODE } from '@/config/beta';
 import { isFeatureAvailable, type RuntimeFeatureId } from './runtime-config';
 import { trackLLMUsage, trackLLMFailure } from './analytics';
 import { getCurrentLanguage } from './i18n';
+import { getSummarizationModelId, MULTILINGUAL_SUMMARY_LANGS } from '@/config/ml-config';
 import { NewsServiceClient, type SummarizeArticleResponse } from '@/generated/client/worldmonitor/news/v1/service_client';
 import { createCircuitBreaker } from '@/utils';
 import { buildSummaryCacheKey } from '@/utils/summary-cache-key';
@@ -116,13 +117,47 @@ async function tryBrowserT5(headlines: string[], modelId?: string): Promise<Summ
     }
 
     const lang = getCurrentLanguage();
+    const isMultilingualLang = MULTILINGUAL_SUMMARY_LANGS.has(lang);
 
-    // Browser T5-small is English/French only — skip for Chinese and other
-    // non-Latin languages; let API providers (Minimax/Groq/OpenRouter) handle them.
-    if (lang === 'zh' || lang === 'ja' || lang === 'ko' || lang === 'ar' || lang === 'ru') {
-      return null;
+    // For multilingual languages, use the mT5-XLSum model if available;
+    // otherwise skip browser T5 and let API providers handle the request.
+    if (isMultilingualLang) {
+      // Determine model: use provided modelId, or the multilingual one for non-Latin langs
+      const effectiveModelId = modelId || 'summarization-multilingual';
+
+      // If the multilingual model isn't loaded and we don't have it configured, skip
+      if (!mlWorker.isModelLoaded(effectiveModelId)) {
+        // Try loading it, but don't block if it fails
+        try {
+          await mlWorker.loadModel(effectiveModelId);
+        } catch {
+          // Model not available (not converted to ONNX yet) — fall back to API
+          return null;
+        }
+      }
+
+      lastAttemptedProvider = 'browser';
+
+      const combinedText = headlines.slice(0, 5).map(h => h.slice(0, 80)).join('. ');
+
+      // mT5-XLSum uses "summarize: " prefix for all languages
+      const prompt = `summarize: ${combinedText}`;
+
+      const [summary] = await mlWorker.summarize([prompt], effectiveModelId, lang);
+
+      if (!summary || summary.length < 10) {
+        return null;
+      }
+
+      return {
+        summary,
+        provider: 'browser',
+        model: 'mT5-XLSum-multilingual',
+        cached: false,
+      };
     }
 
+    // For English/French/etc. — use the original Flan-T5 path
     lastAttemptedProvider = 'browser';
 
     const combinedText = headlines.slice(0, 5).map(h => h.slice(0, 80)).join('. ');
@@ -130,7 +165,7 @@ async function tryBrowserT5(headlines: string[], modelId?: string): Promise<Summ
       ? `Résumez le titre le plus important en 2 phrases concises (moins de 60 mots) : ${combinedText}`
       : `Summarize the most important headline in 2 concise sentences (under 60 words): ${combinedText}`;
 
-    const [summary] = await mlWorker.summarize([prompt], modelId);
+    const [summary] = await mlWorker.summarize([prompt], modelId, lang);
 
     if (!summary || summary.length < 20 || summary.toLowerCase().includes('summarize') || summary.toLowerCase().includes('résumez')) {
       return null;
@@ -143,7 +178,7 @@ async function tryBrowserT5(headlines: string[], modelId?: string): Promise<Summ
       cached: false,
     };
   } catch (error) {
-    console.warn('[Summarization] Browser T5 failed:', error);
+    console.warn('[Summarization] Browser model failed:', error);
     return null;
   }
 }
@@ -224,14 +259,16 @@ async function generateSummaryInternal(
   }
 
   if (BETA_MODE) {
-    const modelReady = mlWorker.isAvailable && mlWorker.isModelLoaded('summarization-beta');
+    // Determine which browser model to use based on language
+    const browserModelId = getSummarizationModelId(lang);
+    const modelReady = mlWorker.isAvailable && mlWorker.isModelLoaded(browserModelId);
 
     if (modelReady) {
       const totalSteps = 1 + API_PROVIDERS.length;
-      // Model already loaded -- use browser T5-small first
+      // Model already loaded -- use browser model first
       if (!options?.skipBrowserFallback) {
         onProgress?.(1, totalSteps, 'Running local AI model (beta)...');
-        const browserResult = await tryBrowserT5(headlines, 'summarization-beta');
+        const browserResult = await tryBrowserT5(headlines, browserModelId);
         if (browserResult) {
           const groqProvider = API_PROVIDERS.find(p => p.provider === 'groq');
           if (groqProvider && !options?.skipCloudProviders) tryApiProvider(groqProvider, headlines, geoContext).catch(() => {});
@@ -248,7 +285,7 @@ async function generateSummaryInternal(
     } else {
       const totalSteps = API_PROVIDERS.length + 2;
       if (mlWorker.isAvailable && !options?.skipBrowserFallback) {
-        mlWorker.loadModel('summarization-beta').catch(() => {});
+        mlWorker.loadModel(browserModelId).catch(() => {});
       }
 
       // API providers while model loads
@@ -259,10 +296,10 @@ async function generateSummaryInternal(
         }
       }
 
-      // Last resort: try browser T5 (may have finished loading by now)
+      // Last resort: try browser model (may have finished loading by now)
       if (mlWorker.isAvailable && !options?.skipBrowserFallback) {
         onProgress?.(API_PROVIDERS.length + 1, totalSteps, 'Waiting for local AI model...');
-        const browserResult = await tryBrowserT5(headlines, 'summarization-beta');
+        const browserResult = await tryBrowserT5(headlines, browserModelId);
         if (browserResult) return browserResult;
       }
 
@@ -273,7 +310,8 @@ async function generateSummaryInternal(
     return null;
   }
 
-  // Normal mode: API chain -> Browser T5
+  // Normal mode: API chain -> Browser model
+  const browserModelId = getSummarizationModelId(lang);
   const totalSteps = API_PROVIDERS.length + 1;
   let chainResult: SummarizationResult | null = null;
 
@@ -284,7 +322,7 @@ async function generateSummaryInternal(
 
   if (!options?.skipBrowserFallback) {
     onProgress?.(totalSteps, totalSteps, 'Loading local AI model...');
-    const browserResult = await tryBrowserT5(headlines);
+    const browserResult = await tryBrowserT5(headlines, browserModelId);
     if (browserResult) return browserResult;
   }
 

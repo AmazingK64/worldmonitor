@@ -32,6 +32,7 @@ import { showMapContextMenu } from '@/components/MapContextMenu';
 import { BETA_MODE } from '@/config/beta';
 import { MILITARY_BASES } from '@/config';
 import { mlWorker } from '@/services/ml-worker';
+import { getSummarizationModelId } from '@/config/ml-config';
 import { isHeadlineMemoryEnabled } from '@/services/ai-flow-settings';
 import { t, getCurrentLanguage } from '@/services/i18n';
 import { trackCountrySelected, trackCountryBriefOpened } from '@/services/analytics';
@@ -416,16 +417,19 @@ export class CountryIntelManager implements AppModule {
         this.ctx.countryBriefPage?.updateBrief({ brief: briefText, country, code });
       } else {
         let fallbackBrief = '';
-        const sumModelId = BETA_MODE ? 'summarization-beta' : 'summarization';
+        const lang = getCurrentLanguage();
+        const sumModelId = BETA_MODE ? getSummarizationModelId(lang) : 'summarization';
         if (briefHeadlines.length >= 2 && mlWorker.isAvailable && mlWorker.isModelLoaded(sumModelId)) {
           try {
-            const lang = getCurrentLanguage();
-            const prompt = lang === 'fr'
-              ? `Résumez la situation actuelle en ${country} à partir de ces titres : ${briefHeadlines.slice(0, 8).join('. ')}`
-              : `Summarize the current situation in ${country} based on these headlines: ${briefHeadlines.slice(0, 8).join('. ')}`;
+            const isMultilingual = sumModelId === 'summarization-multilingual';
+            const prompt = isMultilingual
+              ? `summarize: ${briefHeadlines.slice(0, 8).join('. ')}`
+              : lang === 'fr'
+                ? `Résumez la situation actuelle en ${country} à partir de ces titres : ${briefHeadlines.slice(0, 8).join('. ')}`
+                : `Summarize the current situation in ${country} based on these headlines: ${briefHeadlines.slice(0, 8).join('. ')}`;
 
-            const [summary] = await mlWorker.summarize([prompt], BETA_MODE ? 'summarization-beta' : undefined);
-            if (summary && summary.length > 20) fallbackBrief = summary;
+            const [summary] = await mlWorker.summarize([prompt], BETA_MODE ? sumModelId : undefined, lang);
+            if (summary && summary.length > 10) fallbackBrief = summary;
           } catch { /* T5 failed */ }
         }
 
