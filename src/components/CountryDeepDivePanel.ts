@@ -1,5 +1,6 @@
 import type { CountryBriefSignals } from '@/types';
 import { getSourcePropagandaRisk, getSourceTier } from '@/config/feeds';
+import { SITE_VARIANT } from '@/config';
 import { getCountryCentroid, ME_STRIKE_BOUNDS } from '@/services/country-geometry';
 import type { CountryScore } from '@/services/country-instability';
 import { t } from '@/services/i18n';
@@ -80,6 +81,9 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
   private energyBody: HTMLElement | null = null;
   private energyCard: HTMLElement | null = null;
   private marketsCard: HTMLElement | null = null;
+  private mediaEditorialBody: HTMLElement | null = null;
+  private mediaDistributionBody: HTMLElement | null = null;
+  private mediaBusinessBody: HTMLElement | null = null;
 
   private readonly handleGlobalKeydown = (event: KeyboardEvent): void => {
     if (!this.panel.classList.contains('active')) return;
@@ -253,6 +257,11 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
 
   public updateSignalDetails(details: CountryDeepDiveSignalDetails): void {
     if (!this.signalBreakdownBody || !this.signalRecentBody) return;
+    if (this.isMediaVariant()) {
+      this.renderMediaSignalBreakdown(details);
+      this.renderMediaRecentSignals(details.recentHigh);
+      return;
+    }
     this.renderSignalBreakdown(details);
     this.renderRecentSignals(details.recentHigh);
   }
@@ -316,6 +325,10 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
         this.newsBody.append(row);
       }
     }
+
+    if (this.isMediaVariant()) {
+      this.renderMediaIndustryCards(items);
+    }
   }
 
   public updateMilitaryActivity(summary: CountryDeepDiveMilitarySummary): void {
@@ -351,6 +364,7 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
   }
 
   public updateInfrastructure(countryCode: string): void {
+    if (this.isMediaVariant()) return;
     if (!this.infrastructureBody) return;
     this.infrastructureBody.replaceChildren();
 
@@ -434,11 +448,13 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
   }
 
   public updateEconomicIndicators(indicators: CountryDeepDiveEconomicIndicator[]): void {
+    if (this.isMediaVariant()) return;
     this.economicIndicators = indicators;
     this.renderEconomicIndicators();
   }
 
   public updateCountryFacts(data: CountryFactsData): void {
+    if (this.isMediaVariant()) return;
     if (!this.factsBody) return;
     this.factsBody.replaceChildren();
 
@@ -486,6 +502,7 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
   }
 
   public updateEnergyProfile(data: CountryEnergyProfileData): void {
+    if (this.isMediaVariant()) return;
     if (!this.energyBody) return;
     this.renderEnergyProfile(data);
   }
@@ -850,6 +867,7 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
   }
 
   public updateStock(data: StockIndexData): void {
+    if (this.isMediaVariant()) return;
     if (!data.available) {
       this.renderEconomicIndicators();
       return;
@@ -872,6 +890,7 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
   }
 
   public updateMarkets(markets: PredictionMarket[]): void {
+    if (this.isMediaVariant()) return;
     if (!this.marketsBody) return;
     this.marketsBody.replaceChildren();
 
@@ -968,7 +987,7 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     const flag = this.el('span', 'cdp-flag', CountryDeepDivePanel.toFlagEmoji(code));
     const titleWrap = this.el('div', 'cdp-title-wrap');
     const name = this.el('h2', 'cdp-country-name', country);
-    const subtitle = this.el('div', 'cdp-country-subtitle', `${code.toUpperCase()} • Country Intelligence`);
+    const subtitle = this.el('div', 'cdp-country-subtitle', `${code.toUpperCase()} • ${this.isMediaVariant() ? 'Media Intelligence' : 'Country Intelligence'}`);
     titleWrap.append(name, subtitle);
     left.append(flag, titleWrap);
 
@@ -1016,25 +1035,25 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     header.append(left, right);
 
     const bodyGrid = this.el('div', 'cdp-grid');
-    const [signalsCard, signalBody] = this.sectionCard(t('countryBrief.activeSignals'));
+    const [signalsCard, signalBody] = this.sectionCard(this.isMediaVariant() ? '媒体信号概览' : t('countryBrief.activeSignals'));
     const [timelineCard, timelineBody] = this.sectionCard(t('countryBrief.timeline'));
-    const [newsCard, newsBody] = this.sectionCard(t('countryBrief.topNews'));
-    const [infraCard, infraBody] = this.sectionCard(t('countryBrief.infrastructure'));
-    const [economicCard, economicBody] = this.sectionCard(t('countryBrief.economicIndicators'));
-    const [marketsCard, marketsBody] = this.sectionCard(t('countryBrief.predictionMarkets'));
-    const [briefCard, briefBody] = this.sectionCard(t('countryBrief.intelBrief'));
+    const [newsCard, newsBody] = this.sectionCard(this.isMediaVariant() ? '媒体相关新闻' : t('countryBrief.topNews'));
+    const [infraCard, infraBody] = this.sectionCard(this.isMediaVariant() ? '选题方向' : t('countryBrief.infrastructure'));
+    const [economicCard, economicBody] = this.sectionCard(this.isMediaVariant() ? '平台与分发观察' : t('countryBrief.economicIndicators'));
+    const [marketsCard, marketsBody] = this.sectionCard(this.isMediaVariant() ? '经营与风险观察' : t('countryBrief.predictionMarkets'));
+    const [briefCard, briefBody] = this.sectionCard(this.isMediaVariant() ? '传媒行业 AI 研判' : t('countryBrief.intelBrief'));
 
-    const [factsCard, factsBody] = this.sectionCard(t('countryBrief.countryFacts'));
+    const [factsCard, factsBody] = this.sectionCard(this.isMediaVariant() ? '媒体基本面' : t('countryBrief.countryFacts'));
     this.factsCard = factsCard;
     this.factsBody = factsBody;
     factsBody.append(this.makeLoading(t('countryBrief.loadingFacts')));
     const factsExpanded = this.el('div', 'cdp-expanded-only');
     factsExpanded.append(factsCard);
 
-    const [energyCard, energyBody] = this.sectionCard('Energy Profile');
+    const [energyCard, energyBody] = this.sectionCard(this.isMediaVariant() ? '传播与商业节奏' : 'Energy Profile');
     this.energyCard = energyCard;
     this.energyBody = energyBody;
-    energyBody.append(this.makeLoading('Loading energy data\u2026'));
+    energyBody.append(this.makeLoading(this.isMediaVariant() ? 'Loading media rhythm…' : 'Loading energy data\u2026'));
 
     this.signalsBody = signalBody;
     this.timelineBody = timelineBody;
@@ -1046,15 +1065,24 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     this.marketsCard = marketsCard;
     this.marketsBody = marketsBody;
     this.briefBody = briefBody;
+    this.mediaEditorialBody = this.isMediaVariant() ? infraBody : null;
+    this.mediaDistributionBody = this.isMediaVariant() ? economicBody : null;
+    this.mediaBusinessBody = this.isMediaVariant() ? marketsBody : null;
 
     this.renderInitialSignals(signals);
     newsBody.append(this.makeLoading('Loading country headlines…'));
-    infraBody.append(this.makeLoading('Computing nearby critical infrastructure…'));
-    economicBody.append(this.makeLoading('Loading available indicators…'));
-    marketsBody.append(this.makeLoading(t('countryBrief.loadingMarkets')));
+    infraBody.append(this.makeLoading(this.isMediaVariant() ? 'Generating editorial directions…' : 'Computing nearby critical infrastructure…'));
+    economicBody.append(this.makeLoading(this.isMediaVariant() ? 'Scanning distribution signals…' : 'Loading available indicators…'));
+    marketsBody.append(this.makeLoading(this.isMediaVariant() ? 'Scanning business and risk signals…' : t('countryBrief.loadingMarkets')));
     briefBody.append(this.makeLoading(t('countryBrief.generatingBrief')));
 
-    bodyGrid.append(briefCard, factsExpanded, energyCard, signalsCard, timelineCard, newsCard, infraCard, economicCard, marketsCard);
+    if (this.isMediaVariant()) {
+      factsCard.style.display = 'none';
+      energyCard.style.display = 'none';
+      bodyGrid.append(briefCard, signalsCard, timelineCard, newsCard, infraCard, economicCard, marketsCard);
+    } else {
+      bodyGrid.append(briefCard, factsExpanded, energyCard, signalsCard, timelineCard, newsCard, infraCard, economicCard, marketsCard);
+    }
     shell.append(header, bodyGrid);
     this.content.append(shell);
   }
@@ -1064,12 +1092,20 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     this.energyBody = null;
     this.energyCard = null;
     this.marketsCard = null;
+    this.mediaEditorialBody = null;
+    this.mediaDistributionBody = null;
+    this.mediaBusinessBody = null;
     this.content.replaceChildren();
   }
 
   private renderInitialSignals(signals: CountryBriefSignals): void {
     if (!this.signalsBody) return;
     this.signalsBody.replaceChildren();
+
+    if (this.isMediaVariant()) {
+      this.renderMediaInitialSignals(signals);
+      return;
+    }
 
     const chips = this.el('div', 'cdp-signal-chips');
     this.addSignalChip(chips, signals.criticalNews, t('countryBrief.chips.criticalNews'), '🚨', 'conflict');
@@ -1119,6 +1155,33 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     this.signalRecentBody.append(this.makeLoading('Loading top high-severity signals…'));
   }
 
+  private renderMediaInitialSignals(signals: CountryBriefSignals): void {
+    if (!this.signalsBody) return;
+
+    const chips = this.el('div', 'cdp-signal-chips');
+    this.addSignalChip(chips, signals.criticalNews, '高优先级选题', '📰', 'conflict');
+    this.addSignalChip(chips, signals.protests + signals.conflictEvents, '热点事件', '🔥', 'protest');
+    this.addSignalChip(chips, signals.outages + signals.aisDisruptions + signals.aviationDisruptions + signals.gpsJammingHexes, '传播与分发异常', '📡', 'outage');
+    this.addSignalChip(chips, signals.cyberThreats + signals.thermalEscalations, '平台与系统风险', '🛠️', 'military');
+    this.addSignalChip(chips, signals.travelAdvisories + signals.sanctionsNewDesignations + signals.sanctionsDesignations, '跨境合规提醒', '⚖️', 'advisory');
+    this.addSignalChip(chips, signals.climateStress + signals.earthquakes + signals.satelliteFires, '灾害关联报道', '🌍', 'climate');
+    this.signalsBody.append(chips);
+
+    this.signalBreakdownBody = this.el('div', 'cdp-signal-breakdown');
+    this.signalRecentBody = this.el('div', 'cdp-signal-recent');
+    this.signalsBody.append(this.signalBreakdownBody, this.signalRecentBody);
+
+    const seeded: CountryDeepDiveSignalDetails = {
+      critical: signals.criticalNews + signals.conflictEvents + Math.max(0, signals.activeStrikes),
+      high: signals.outages + signals.aisDisruptions + signals.aviationDisruptions + signals.gpsJammingHexes,
+      medium: signals.cyberThreats + signals.travelAdvisories + signals.sanctionsDesignations + signals.sanctionsNewDesignations,
+      low: signals.climateStress + signals.earthquakes + signals.satelliteFires + signals.temporalAnomalies,
+      recentHigh: [],
+    };
+    this.renderMediaSignalBreakdown(seeded);
+    this.signalRecentBody.append(this.makeLoading('Loading media-relevant developments…'));
+  }
+
   private addSignalChip(container: HTMLElement, count: number, label: string, icon: string, cls: string): void {
     if (count <= 0) return;
     container.append(this.makeSignalChip(`${icon} ${count} ${label}`, cls));
@@ -1140,6 +1203,18 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     );
   }
 
+  private renderMediaSignalBreakdown(details: CountryDeepDiveSignalDetails): void {
+    if (!this.signalBreakdownBody) return;
+    this.signalBreakdownBody.replaceChildren();
+
+    this.signalBreakdownBody.append(
+      this.metric('高优先级选题', String(details.critical), 'cdp-chip-danger'),
+      this.metric('传播阻断', String(details.high), 'cdp-chip-warn'),
+      this.metric('平台/合规风险', String(details.medium), 'cdp-chip-neutral'),
+      this.metric('外围背景', String(details.low), 'cdp-chip-success'),
+    );
+  }
+
   private renderRecentSignals(items: CountryDeepDiveSignalItem[]): void {
     if (!this.signalRecentBody) return;
     this.signalRecentBody.replaceChildren();
@@ -1158,6 +1233,29 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
       );
       const desc = this.el('div', 'cdp-signal-desc', item.description);
       const ts = this.el('div', 'cdp-signal-time', this.formatRelativeTime(item.timestamp));
+      row.append(line, desc, ts);
+      this.signalRecentBody.append(row);
+    }
+  }
+
+  private renderMediaRecentSignals(items: CountryDeepDiveSignalItem[]): void {
+    if (!this.signalRecentBody) return;
+    this.signalRecentBody.replaceChildren();
+
+    if (items.length === 0) {
+      this.signalRecentBody.append(this.makeEmpty('当前暂无可直接转化为传媒选题的高优先级动态。'));
+      return;
+    }
+
+    for (const item of items.slice(0, 3)) {
+      const row = this.el('div', 'cdp-signal-item');
+      const line = this.el('div', 'cdp-signal-line');
+      line.append(
+        this.badge(this.toMediaSignalLabel(item.type), 'cdp-type-badge'),
+        this.badge(this.toMediaSeverityLabel(item.severity), `cdp-severity-badge sev-${item.severity}`),
+      );
+      const desc = this.el('div', 'cdp-signal-desc', item.description);
+      const ts = this.el('div', 'cdp-signal-time', `${this.formatRelativeTime(item.timestamp)} • 建议跟进背景、平台影响和传播角度`);
       row.append(line, desc, ts);
       this.signalRecentBody.append(row);
     }
@@ -1283,6 +1381,111 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     card.style.display = visible ? '' : 'none';
   }
 
+  private isMediaVariant(): boolean {
+    return SITE_VARIANT === 'media';
+  }
+
+  private renderMediaIndustryCards(items: NewsItem[]): void {
+    this.renderMediaEditorialDirections(items);
+    this.renderMediaDistributionWatch(items);
+    this.renderMediaBusinessWatch(items);
+  }
+
+  private renderMediaEditorialDirections(items: NewsItem[]): void {
+    if (!this.mediaEditorialBody) return;
+    this.mediaEditorialBody.replaceChildren();
+
+    const buckets = [
+      { title: '平台策略与分发', patterns: [/platform/i, /algorithm/i, /distribution/i, /youtube/i, /tiktok/i, /recommend/i, /平台/, /分发/, /推荐/, /流量/] },
+      { title: 'AI 内容与版权', patterns: [/ai/i, /model/i, /copyright/i, /synthetic/i, /人工智能/, /大模型/, /版权/, /AIGC/i] },
+      { title: '广告与品牌预算', patterns: [/advertis/i, /brand/i, /campaign/i, /marketing/i, /广告/, /品牌/, /投放/, /营销/] },
+      { title: '创作者与用户增长', patterns: [/creator/i, /influencer/i, /audience/i, /subscription/i, /创作者/, /粉丝/, /用户/, /订阅/] },
+    ].map((bucket) => ({
+      ...bucket,
+      matches: items.filter((item) => bucket.patterns.some((pattern) => pattern.test(item.title))).slice(0, 3),
+    })).filter((bucket) => bucket.matches.length > 0).slice(0, 4);
+
+    if (buckets.length === 0) {
+      this.mediaEditorialBody.append(this.makeEmpty('当前未识别到明确的传媒选题方向。'));
+      return;
+    }
+
+    for (const bucket of buckets) {
+      const block = this.el('div', 'cdp-economic-item');
+      block.append(this.el('div', 'cdp-economic-label', `${bucket.title} · ${bucket.matches.length}条`));
+      block.append(this.el('div', 'cdp-economic-value', bucket.matches[0]!.title));
+      block.append(this.el('div', 'cdp-economic-source', `建议优先延展：${bucket.matches.map((item) => item.source).filter(Boolean).slice(0, 2).join('、') || '多来源'}`));
+      this.mediaEditorialBody.append(block);
+    }
+  }
+
+  private renderMediaDistributionWatch(items: NewsItem[]): void {
+    if (!this.mediaDistributionBody) return;
+    this.mediaDistributionBody.replaceChildren();
+
+    const sections = [
+      {
+        label: '平台分发变化',
+        description: '关注平台算法、推荐规则、频道策略和内容分发节奏变化。',
+        count: items.filter((item) => /algorithm|distribution|platform|youtube|tiktok|recommend|平台|分发|推荐|短视频/i.test(item.title)).length,
+      },
+      {
+        label: '用户注意力迁移',
+        description: '关注用户时间分配、热点迁移和跨平台话题扩散情况。',
+        count: items.filter((item) => /audience|creator|subscription|trend|viral|用户|创作者|订阅|热度/i.test(item.title)).length,
+      },
+      {
+        label: '内容形态变化',
+        description: '关注视频、直播、播客、AI 生成内容等形态变化。',
+        count: items.filter((item) => /video|podcast|stream|live|ai|synthetic|视频|直播|播客|人工智能/i.test(item.title)).length,
+      },
+    ];
+
+    for (const section of sections) {
+      const row = this.el('div', 'cdp-economic-item');
+      const top = this.el('div', 'cdp-economic-top');
+      top.append(
+        this.el('span', 'cdp-economic-label', section.label),
+        this.el('span', 'cdp-trend-token trend-flat', String(section.count)),
+      );
+      row.append(top, this.el('div', 'cdp-economic-value', section.description));
+      this.mediaDistributionBody.append(row);
+    }
+  }
+
+  private renderMediaBusinessWatch(items: NewsItem[]): void {
+    if (!this.mediaBusinessBody) return;
+    this.mediaBusinessBody.replaceChildren();
+
+    const riskItems = items.filter((item) => item.isAlert || item.threat?.level === 'high' || item.threat?.level === 'critical').slice(0, 2);
+    const adCount = items.filter((item) => /advertis|brand|campaign|marketing|广告|品牌|投放|营销/i.test(item.title)).length;
+    const policyCount = items.filter((item) => /regulation|policy|compliance|copyright|监管|政策|合规|版权/i.test(item.title)).length;
+    const creatorCount = items.filter((item) => /creator|subscription|membership|paywall|创作者|订阅|会员|付费/i.test(item.title)).length;
+
+    const metrics = [
+      `广告与品牌相关信号 ${adCount} 条`,
+      `监管与版权相关信号 ${policyCount} 条`,
+      `创作者与付费相关信号 ${creatorCount} 条`,
+    ];
+
+    for (const metric of metrics) {
+      this.mediaBusinessBody.append(this.metric('经营观察', metric, 'cdp-chip-neutral'));
+    }
+
+    if (riskItems.length > 0) {
+      const title = this.el('div', 'cdp-subtitle', '优先关注风险事项');
+      this.mediaBusinessBody.append(title);
+      for (const item of riskItems) {
+        const row = this.el('div', 'cdp-signal-item');
+        row.append(
+          this.el('div', 'cdp-signal-desc', item.title),
+          this.el('div', 'cdp-signal-time', `${item.source} • ${this.formatRelativeTime(item.pubDate)}`),
+        );
+        this.mediaBusinessBody.append(row);
+      }
+    }
+  }
+
   private formatBrief(text: string, headlineCount = 0): string {
     return formatIntelBrief(text, headlineCount > 0 ? { count: headlineCount, hrefPrefix: '#cdp-news-' } : undefined);
   }
@@ -1296,6 +1499,23 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     const normalized = stripped.replace(/\s+/g, ' ').trim();
     const sentences = normalized.split(/(?<=[.!?])\s+/).filter((part) => part.length > 0);
     return sentences.slice(0, 3).join(' ') || normalized;
+  }
+
+  private toMediaSignalLabel(type: string): string {
+    const normalized = type.toLowerCase();
+    if (normalized.includes('cyber')) return '平台风险';
+    if (normalized.includes('outage') || normalized.includes('aviation') || normalized.includes('jamming')) return '分发异常';
+    if (normalized.includes('protest') || normalized.includes('strike') || normalized.includes('conflict')) return '热点事件';
+    if (normalized.includes('sanction') || normalized.includes('advisory')) return '合规提醒';
+    if (normalized.includes('climate') || normalized.includes('quake') || normalized.includes('fire')) return '背景事件';
+    return '选题线索';
+  }
+
+  private toMediaSeverityLabel(severity: CountryDeepDiveSignalItem['severity']): string {
+    if (severity === 'critical') return '优先跟进';
+    if (severity === 'high') return '重点观察';
+    if (severity === 'medium') return '持续跟踪';
+    return '背景参考';
   }
 
   private trendArrowFromDirection(trend: TrendDirection): string {

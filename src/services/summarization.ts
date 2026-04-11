@@ -114,9 +114,17 @@ async function tryBrowserT5(headlines: string[], modelId?: string): Promise<Summ
     if (!mlWorker.isAvailable) {
       return null;
     }
-    lastAttemptedProvider = 'browser';
 
     const lang = getCurrentLanguage();
+
+    // Browser T5-small is English/French only — skip for Chinese and other
+    // non-Latin languages; let API providers (Minimax/Groq/OpenRouter) handle them.
+    if (lang === 'zh' || lang === 'ja' || lang === 'ko' || lang === 'ar' || lang === 'ru') {
+      return null;
+    }
+
+    lastAttemptedProvider = 'browser';
+
     const combinedText = headlines.slice(0, 5).map(h => h.slice(0, 80)).join('. ');
     const prompt = lang === 'fr'
       ? `Résumez le titre le plus important en 2 phrases concises (moins de 60 mots) : ${combinedText}`

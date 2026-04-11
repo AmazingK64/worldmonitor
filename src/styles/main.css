@@ -6890,6 +6890,7 @@ a.prediction-link:hover {
   border-radius: 6px;
   z-index: 1000;
   overflow-y: auto;
+  box-sizing: border-box;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), inset 0 1px 20px rgba(255, 255, 255, 0.02), 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
@@ -6953,8 +6954,12 @@ a.prediction-link:hover {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
   background: var(--bg);
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .popup-header.iranEvent {
@@ -6995,6 +7000,7 @@ a.prediction-link:hover {
   color: var(--red);
   letter-spacing: 0.5px;
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -7027,6 +7033,10 @@ a.prediction-link:hover {
   background: none;
   border-radius: 0;
   flex-shrink: 0;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .popup-badge::before {
@@ -7101,6 +7111,8 @@ a.prediction-link:hover {
   border-radius: 4px;
   transition: background 0.12s, color 0.12s;
   flex-shrink: 0;
+  position: relative;
+  z-index: 3;
 }
 
 .popup-close:hover {
