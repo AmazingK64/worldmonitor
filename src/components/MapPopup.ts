@@ -1,9 +1,9 @@
-import type { ConflictZone, Hotspot, NewsItem, MilitaryBase, StrategicWaterway, APTGroup, NuclearFacility, EconomicCenter, GammaIrradiator, Pipeline, UnderseaCable, CableAdvisory, RepairShip, InternetOutage, AIDataCenter, AisDisruptionEvent, SocialUnrestEvent, MilitaryFlight, MilitaryVessel, MilitaryFlightCluster, MilitaryVesselCluster, NaturalEvent, Port, Spaceport, CriticalMineralProject, CyberThreat } from '@/types';
+import type { ConflictZone, Hotspot, NewsItem, MilitaryBase, StrategicWaterway, APTGroup, NuclearFacility, EconomicCenter, GammaIrradiator, Pipeline, UnderseaCable, CableAdvisory, RepairShip, InternetOutage, AIDataCenter, AisDisruptionEvent, SocialUnrestEvent, MilitaryFlight, MilitaryVessel, MilitaryFlightCluster, MilitaryVesselCluster, NaturalEvent, Port, Spaceport, CriticalMineralProject, CyberThreat, GulfInvestment } from '@/types';
 import type { AirportDelayAlert, PositionSample } from '@/services/aviation';
 import type { Earthquake } from '@/services/earthquakes';
 import type { WeatherAlert } from '@/services/weather';
 import type { RadiationObservation } from '@/services/radiation';
-import { UNDERSEA_CABLES } from '@/config';
+import { SITE_VARIANT, UNDERSEA_CABLES } from '@/config';
 import type { StartupHub, Accelerator, TechHQ, CloudRegion } from '@/config/tech-geo';
 import type { TechHubActivity } from '@/services/tech-activity';
 import type { GeoHubActivity } from '@/services/geo-activity';
@@ -73,7 +73,7 @@ function compactParts(parts: Array<string | null | undefined>): string[] {
   return parts.map(part => (typeof part === 'string' ? part.trim() : '')).filter(Boolean);
 }
 
-export type PopupType = 'conflict' | 'hotspot' | 'earthquake' | 'weather' | 'base' | 'waterway' | 'apt' | 'cyberThreat' | 'nuclear' | 'economic' | 'irradiator' | 'pipeline' | 'cable' | 'cable-advisory' | 'repair-ship' | 'outage' | 'datacenter' | 'datacenterCluster' | 'ais' | 'protest' | 'protestCluster' | 'flight' | 'aircraft' | 'militaryFlight' | 'militaryVessel' | 'militaryFlightCluster' | 'militaryVesselCluster' | 'natEvent' | 'port' | 'spaceport' | 'mineral' | 'startupHub' | 'cloudRegion' | 'techHQ' | 'accelerator' | 'techEvent' | 'techHQCluster' | 'techEventCluster' | 'techActivity' | 'geoActivity' | 'stockExchange' | 'financialCenter' | 'centralBank' | 'commodityHub' | 'iranEvent' | 'gpsJamming' | 'radiation';
+export type PopupType = 'conflict' | 'hotspot' | 'earthquake' | 'weather' | 'base' | 'waterway' | 'apt' | 'cyberThreat' | 'nuclear' | 'economic' | 'irradiator' | 'pipeline' | 'cable' | 'cable-advisory' | 'repair-ship' | 'outage' | 'datacenter' | 'datacenterCluster' | 'ais' | 'protest' | 'protestCluster' | 'flight' | 'aircraft' | 'militaryFlight' | 'militaryVessel' | 'militaryFlightCluster' | 'militaryVesselCluster' | 'natEvent' | 'port' | 'spaceport' | 'mineral' | 'startupHub' | 'cloudRegion' | 'techHQ' | 'accelerator' | 'techEvent' | 'techHQCluster' | 'techEventCluster' | 'techActivity' | 'geoActivity' | 'stockExchange' | 'financialCenter' | 'centralBank' | 'commodityHub' | 'iranEvent' | 'gpsJamming' | 'radiation' | 'mediaNotice';
 
 interface TechEventPopupData {
   id: string;
@@ -202,7 +202,7 @@ interface DatacenterClusterData {
 
 interface PopupData {
   type: PopupType;
-  data: ConflictZone | Hotspot | Earthquake | WeatherAlert | MilitaryBase | StrategicWaterway | APTGroup | CyberThreat | NuclearFacility | EconomicCenter | GammaIrradiator | Pipeline | UnderseaCable | CableAdvisory | RepairShip | InternetOutage | AIDataCenter | AisDisruptionEvent | SocialUnrestEvent | AirportDelayAlert | PositionSample | MilitaryFlight | MilitaryVessel | MilitaryFlightCluster | MilitaryVesselCluster | NaturalEvent | Port | Spaceport | CriticalMineralProject | StartupHub | CloudRegion | TechHQ | Accelerator | TechEventPopupData | TechHQClusterData | TechEventClusterData | ProtestClusterData | DatacenterClusterData | TechHubActivity | GeoHubActivity | StockExchangePopupData | FinancialCenterPopupData | CentralBankPopupData | CommodityHubPopupData | IranEventPopupData | GpsJammingPopupData | RadiationObservation;
+  data: ConflictZone | Hotspot | Earthquake | WeatherAlert | MilitaryBase | StrategicWaterway | APTGroup | CyberThreat | NuclearFacility | EconomicCenter | GammaIrradiator | Pipeline | UnderseaCable | CableAdvisory | RepairShip | InternetOutage | AIDataCenter | AisDisruptionEvent | SocialUnrestEvent | AirportDelayAlert | PositionSample | MilitaryFlight | MilitaryVessel | MilitaryFlightCluster | MilitaryVesselCluster | NaturalEvent | Port | Spaceport | CriticalMineralProject | StartupHub | CloudRegion | TechHQ | Accelerator | TechEventPopupData | TechHQClusterData | TechEventClusterData | ProtestClusterData | DatacenterClusterData | TechHubActivity | GeoHubActivity | StockExchangePopupData | FinancialCenterPopupData | CentralBankPopupData | CommodityHubPopupData | IranEventPopupData | GpsJammingPopupData | RadiationObservation | GulfInvestment;
   relatedNews?: NewsItem[];
   x: number;
   y: number;
@@ -671,6 +671,8 @@ export class MapPopup {
         return this.renderCentralBankPopup(data.data as CentralBankPopupData);
       case 'commodityHub':
         return this.renderCommodityHubPopup(data.data as CommodityHubPopupData);
+      case 'mediaNotice':
+        return this.renderMediaNoticePopup(data.data as GulfInvestment);
       case 'iranEvent':
         return this.renderIranEventPopup(data.data as IranEventPopupData);
       case 'gpsJamming':
@@ -1007,7 +1009,7 @@ export class MapPopup {
     `;
   }
 
-  public async loadHotspotGdeltContext(hotspot: Hotspot): Promise<void> {
+  public async loadHotspotGdeltContext(hotspot: Hotspot, relatedNews: NewsItem[] = []): Promise<void> {
     if (!this.popup) return;
 
     const container = this.popup.querySelector('.hotspot-gdelt-context');
@@ -1019,10 +1021,7 @@ export class MapPopup {
       if (!this.popup || !container.isConnected) return;
 
       if (articles.length === 0) {
-        container.innerHTML = `
-          <div class="hotspot-gdelt-header">${t('popups.liveIntel')}</div>
-          <div class="hotspot-gdelt-loading">${t('popups.noCoverage')}</div>
-        `;
+        container.innerHTML = this.renderHotspotFallbackContext(hotspot, relatedNews);
         return;
       }
 
@@ -1034,12 +1033,80 @@ export class MapPopup {
       `;
     } catch (error) {
       if (container.isConnected) {
-        container.innerHTML = `
-          <div class="hotspot-gdelt-header">${t('popups.liveIntel')}</div>
-          <div class="hotspot-gdelt-loading">${t('common.error')}</div>
-        `;
+        container.innerHTML = this.renderHotspotFallbackContext(hotspot, relatedNews);
       }
     }
+  }
+
+  private renderHotspotFallbackContext(hotspot: Hotspot, relatedNews: NewsItem[]): string {
+    const items: string[] = [];
+
+    for (const news of relatedNews.slice(0, 3)) {
+      items.push(`
+        <a href="${sanitizeUrl(news.link)}" target="_blank" rel="noopener" class="hotspot-gdelt-article">
+          <div class="article-meta">
+            <span>${escapeHtml(news.source || 'News')}</span>
+            <span>${escapeHtml(this.getTimeAgo(new Date(news.pubDate)))}</span>
+          </div>
+          <div class="article-title">${escapeHtml(news.title)}</div>
+        </a>
+      `);
+    }
+
+    for (const indicator of (hotspot.escalationIndicators || []).slice(0, 2)) {
+      items.push(`
+        <div class="hotspot-gdelt-article hotspot-gdelt-article-static">
+          <div class="article-meta">
+            <span>${escapeHtml(hotspot.subtext || hotspot.status || 'Media signal')}</span>
+            <span>${escapeHtml(t('popups.status'))}</span>
+          </div>
+          <div class="article-title">${escapeHtml(indicator)}</div>
+        </div>
+      `);
+    }
+
+    if (items.length < 5 && hotspot.whyItMatters) {
+      items.push(`
+        <div class="hotspot-gdelt-article hotspot-gdelt-article-static">
+          <div class="article-meta">
+            <span>${escapeHtml(hotspot.name)}</span>
+            <span>Brief</span>
+          </div>
+          <div class="article-title">${escapeHtml(hotspot.whyItMatters)}</div>
+        </div>
+      `);
+    }
+
+    if (items.length < 5 && hotspot.history?.lastMajorEvent) {
+      items.push(`
+        <div class="hotspot-gdelt-article hotspot-gdelt-article-static">
+          <div class="article-meta">
+            <span>${escapeHtml(t('popups.historicalContext'))}</span>
+            <span>${escapeHtml(hotspot.history.lastMajorEventDate || '')}</span>
+          </div>
+          <div class="article-title">${escapeHtml(hotspot.history.lastMajorEvent)}</div>
+        </div>
+      `);
+    }
+
+    if (items.length < 5 && hotspot.agencies?.length) {
+      items.push(`
+        <div class="hotspot-gdelt-article hotspot-gdelt-article-static">
+          <div class="article-meta">
+            <span>${escapeHtml(t('popups.keyEntities'))}</span>
+            <span>${hotspot.agencies.length}</span>
+          </div>
+          <div class="article-title">${escapeHtml(hotspot.agencies.slice(0, 4).join('、'))}</div>
+        </div>
+      `);
+    }
+
+    return `
+      <div class="hotspot-gdelt-header">${t('popups.liveIntel')}</div>
+      <div class="hotspot-gdelt-articles">
+        ${items.slice(0, 5).join('') || `<div class="hotspot-gdelt-loading">${t('popups.noCoverage')}</div>`}
+      </div>
+    `;
   }
 
   public async loadWingbitsLiveFlight(hexCode: string): Promise<void> {
@@ -2120,6 +2187,7 @@ ${isFeatureAvailable('wingbitsEnrichment') ? '<div class="wingbits-live-section"
           </div>
           ` : ''}
         </div>
+        ${SITE_VARIANT === 'media' ? `<div class="popup-subtitle">AI媒体数据中心</div>` : ''}
         ${dc.note ? `<p class="popup-description">${escapeHtml(dc.note)}</p>` : ''}
         <div class="popup-attribution">${t('popups.datacenter.attribution')}</div>
       </div>
@@ -2197,7 +2265,7 @@ ${isFeatureAvailable('wingbitsEnrichment') ? '<div class="wingbits-live-section"
     return `
       <div class="popup-header startup-hub ${hub.tier}">
         <span class="popup-title">${tierIcons[hub.tier] || '🚀'} ${escapeHtml(hub.name)}</span>
-        <span class="popup-badge ${hub.tier}">${tierLabels[hub.tier] || t('popups.startupHub.tiers.hub')}</span>
+        <span class="popup-badge ${hub.tier}">${SITE_VARIANT === 'media' ? '传播中心' : (tierLabels[hub.tier] || t('popups.startupHub.tiers.hub'))}</span>
         <button class="popup-close" aria-label="Close">×</button>
       </div>
       <div class="popup-body">
@@ -3233,6 +3301,32 @@ ${isFeatureAvailable('wingbitsEnrichment') ? '<div class="wingbits-live-section"
           </div>
         ` : ''}
         ${hub.description ? `<p class="popup-description">${escapeHtml(hub.description)}</p>` : ''}
+      </div>
+    `;
+  }
+
+  private renderMediaNoticePopup(notice: GulfInvestment): string {
+    return `
+      <div class="popup-header commodity-hub">
+        <span class="popup-title">📢 ${escapeHtml(notice.assetName)}</span>
+        <span class="popup-badge">政府通告</span>
+        <button class="popup-close" aria-label="Close">×</button>
+      </div>
+      <div class="popup-body">
+        <div class="popup-subtitle">${escapeHtml(notice.investingEntity)} • ${escapeHtml(notice.targetCountry)}</div>
+        <div class="popup-stats">
+          <div class="popup-stat">
+            <span class="stat-label">${t('popups.location')}</span>
+            <span class="stat-value">${escapeHtml(notice.targetCountry)}</span>
+          </div>
+          <div class="popup-stat">
+            <span class="stat-label">通告类型</span>
+            <span class="stat-value">${escapeHtml(notice.assetType)}</span>
+          </div>
+        </div>
+        ${notice.description ? `<p class="popup-description">${escapeHtml(notice.description)}</p>` : ''}
+        ${notice.tags?.length ? `<div class="popup-tags">${notice.tags.map((tag) => `<span class="popup-tag">${escapeHtml(tag)}</span>`).join('')}</div>` : ''}
+        ${notice.sourceUrl ? `<a href="${sanitizeUrl(notice.sourceUrl)}" target="_blank" rel="noopener" class="popup-link">查看原始通告 →</a>` : ''}
       </div>
     `;
   }

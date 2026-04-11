@@ -5,7 +5,8 @@
  * when the active variant is `media`, so the map reflects actual media-industry
  * content rather than the original geopolitical/financial/tech data.
  */
-import type { Hotspot, EconomicCenter, MapTechEventCluster } from '@/types';
+import type { AIDataCenter, EconomicCenter, GulfInvestment, Hotspot, MapTechEventCluster } from '@/types';
+import type { StartupHub } from './tech-geo';
 
 // ---------------------------------------------------------------------------
 // 1. Media Hotspots – key media-industry regions & editorial flashpoints
@@ -421,5 +422,120 @@ export const MEDIA_EVENTS: MapTechEventCluster[] = [
     location: 'Sydney',
     country: 'Australia',
     soonestDaysUntil: 54,
+  },
+];
+
+// ---------------------------------------------------------------------------
+// 4. Media Dissemination Centers – replaces startup hubs in media variant.
+// ---------------------------------------------------------------------------
+export const MEDIA_DISSEMINATION_CENTERS: StartupHub[] = [
+  { id: 'mdc_beijing', name: '央媒传播中枢', city: 'Beijing', country: 'China', lat: 39.9042, lon: 116.4074, tier: 'mega', unicorns: 18, description: '央视、新华社、人民网及政务传播体系高度集中的全国级新闻传播中心。' },
+  { id: 'mdc_shanghai', name: '商业内容分发中心', city: 'Shanghai', country: 'China', lat: 31.2304, lon: 121.4737, tier: 'mega', unicorns: 16, description: '品牌广告、视频平台、内容电商和都市媒体协同最活跃的传播中枢。' },
+  { id: 'mdc_hongkong', name: '国际华语新闻中心', city: 'Hong Kong', country: 'China', lat: 22.3193, lon: 114.1694, tier: 'major', unicorns: 9, description: '国际媒体、财经新闻与华语受众传播链路的关键节点。' },
+  { id: 'mdc_singapore', name: '亚太新闻分发中心', city: 'Singapore', country: 'Singapore', lat: 1.3521, lon: 103.8198, tier: 'major', unicorns: 7, description: '通讯社区域总部、跨境媒体运营和多语种新闻分发的枢纽。' },
+  { id: 'mdc_london', name: '欧洲公共传播中心', city: 'London', country: 'UK', lat: 51.5074, lon: -0.1278, tier: 'major', unicorns: 8, description: 'BBC、路透及国际公共传播机构密集分布的欧洲中心。' },
+  { id: 'mdc_newyork', name: '全球新闻议程中心', city: 'New York', country: 'USA', lat: 40.7128, lon: -74.0060, tier: 'mega', unicorns: 15, description: '国际媒体总部、财经信息服务和全球议程设置最集中的新闻中心。' },
+  { id: 'mdc_seoul', name: '韩流内容传播中心', city: 'Seoul', country: 'South Korea', lat: 37.5665, lon: 126.9780, tier: 'major', unicorns: 6, description: 'K-content 全球传播、娱乐宣发和平台联运的高活跃区域。' },
+];
+
+// ---------------------------------------------------------------------------
+// 5. AI Media Data Centers – replaces generic AI data centers in media variant.
+// ---------------------------------------------------------------------------
+export const MEDIA_AI_DATA_CENTERS: AIDataCenter[] = [
+  { id: 'madc_beijing', name: '央视云媒智算中心', owner: 'China Media Group', country: 'China', lat: 39.92, lon: 116.45, status: 'existing', chipType: 'H100 / Ascend', chipCount: 28000, powerMW: 48, sector: 'Media AI', note: '支持新闻剪辑、AIGC 审核、智能分发和多模态新闻生产。' },
+  { id: 'madc_shanghai', name: 'SMG-AI内容引擎基地', owner: 'SMG', country: 'China', lat: 31.21, lon: 121.49, status: 'existing', chipType: 'A800 / H800', chipCount: 18000, powerMW: 30, sector: 'Media AI', note: '面向视频生成、广告素材自动化和直播切片分发。' },
+  { id: 'madc_shenzhen', name: '腾讯媒体智能算力中心', owner: 'Tencent Media Lab', country: 'China', lat: 22.54, lon: 114.06, status: 'planned', chipType: 'H20 / Ascend', chipCount: 24000, powerMW: 42, sector: 'Media AI', note: '重点支撑视频号、内容审核、智能推荐和媒体 agent 工作流。' },
+  { id: 'madc_singapore', name: '亚太多语种新闻算力节点', owner: 'Regional Media Cloud', country: 'Singapore', lat: 1.31, lon: 103.86, status: 'existing', chipType: 'H100', chipCount: 16000, powerMW: 26, sector: 'Media AI', note: '用于国际媒体编译、跨语种摘要和区域内容审核。' },
+  { id: 'madc_newyork', name: 'Newsroom AI Compute Hub', owner: 'Global News Group', country: 'USA', lat: 40.75, lon: -73.98, status: 'existing', chipType: 'H100', chipCount: 22000, powerMW: 36, sector: 'Media AI', note: '服务实时新闻摘要、商业洞察、广告优化和智能搜索。' },
+];
+
+// ---------------------------------------------------------------------------
+// 6. Government News Notices – replaces GCC investment markers in media variant.
+// ---------------------------------------------------------------------------
+export const MEDIA_GOVERNMENT_NOTICES: GulfInvestment[] = [
+  {
+    id: 'mgn_beijing_press',
+    investingEntity: 'Other',
+    investingCountry: 'SA',
+    targetCountry: '中国',
+    targetCountryIso: 'CN',
+    sector: 'telecoms',
+    assetType: '新闻发布会',
+    assetName: '国务院政策例行吹风会',
+    lat: 39.908, lon: 116.397,
+    investmentUSD: 50000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '涉及内容治理、平台监管、产业扶持和重大舆情的高频权威通告来源。',
+    sourceUrl: 'https://www.scio.gov.cn',
+    tags: ['政策发布', '新闻办'],
+  },
+  {
+    id: 'mgn_brussels_ec',
+    investingEntity: 'Other',
+    investingCountry: 'UAE',
+    targetCountry: 'Belgium',
+    targetCountryIso: 'BE',
+    sector: 'telecoms',
+    assetType: '官方公告',
+    assetName: '欧盟委员会新闻通告',
+    lat: 50.85, lon: 4.35,
+    investmentUSD: 42000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '聚焦数字服务法、平台治理、版权合规与 AI 监管等官方通告。',
+    sourceUrl: 'https://ec.europa.eu',
+    tags: ['DSA', '平台监管'],
+  },
+  {
+    id: 'mgn_dc_whitehouse',
+    investingEntity: 'Other',
+    investingCountry: 'SA',
+    targetCountry: 'USA',
+    targetCountryIso: 'US',
+    sector: 'telecoms',
+    assetType: '新闻简报',
+    assetName: '白宫新闻简报',
+    lat: 38.8977, lon: -77.0365,
+    investmentUSD: 46000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '涉及平台监管、国家安全、文化政策和国际传播议题的重要官方口径。',
+    sourceUrl: 'https://www.whitehouse.gov/briefing-room/',
+    tags: ['白宫', '官方简报'],
+  },
+  {
+    id: 'mgn_seoul_mcis',
+    investingEntity: 'Other',
+    investingCountry: 'UAE',
+    targetCountry: 'South Korea',
+    targetCountryIso: 'KR',
+    sector: 'telecoms',
+    assetType: '部委公告',
+    assetName: '韩国文体观光部媒体通告',
+    lat: 37.5665, lon: 126.9780,
+    investmentUSD: 28000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '围绕 K-content 出海、平台合作和文化产业扶持的政府信号源。',
+    sourceUrl: 'https://www.mcst.go.kr',
+    tags: ['韩流', '文化政策'],
+  },
+  {
+    id: 'mgn_singapore_mci',
+    investingEntity: 'Other',
+    investingCountry: 'SA',
+    targetCountry: 'Singapore',
+    targetCountryIso: 'SG',
+    sector: 'telecoms',
+    assetType: '监管通报',
+    assetName: '新加坡通信及新闻部通报',
+    lat: 1.29, lon: 103.85,
+    investmentUSD: 22000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '面向跨境平台治理、信息传播规范和国际媒体合作的政策通告节点。',
+    sourceUrl: 'https://www.mci.gov.sg',
+    tags: ['监管', '跨境平台'],
   },
 ];

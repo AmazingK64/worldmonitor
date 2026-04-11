@@ -96,6 +96,9 @@ import {
   MEDIA_HOTSPOTS,
   MEDIA_DEMANDS,
   MEDIA_EVENTS,
+  MEDIA_DISSEMINATION_CENTERS,
+  MEDIA_AI_DATA_CENTERS,
+  MEDIA_GOVERNMENT_NOTICES,
 } from '@/config';
 import type { GulfInvestment } from '@/types';
 import { resolveTradeRouteSegments, TRADE_ROUTES as TRADE_ROUTES_LIST, type TradeRouteSegment } from '@/config/trade-routes';
@@ -1191,7 +1194,7 @@ export class DeckGLMap {
     const layers = this.state.layers;
     const useProtests = layers.protests && this.protestSuperclusterSource.length > 0;
     const useTechHQ = SITE_VARIANT === 'tech' && layers.techHQs;
-    const useTechEvents = SITE_VARIANT === 'tech' && layers.techEvents && this.techEvents.length > 0;
+    const useTechEvents = (SITE_VARIANT === 'tech' || SITE_VARIANT === 'media') && layers.techEvents && (SITE_VARIANT === 'media' ? MEDIA_EVENTS.length > 0 : this.techEvents.length > 0);
     const useDatacenterClusters = layers.datacenters && zoom < 5;
     const layerMask = `${Number(useProtests)}${Number(useTechHQ)}${Number(useTechEvents)}${Number(useDatacenterClusters)}`;
     if (zoom === this.lastSCZoom && boundsKey === this.lastSCBoundsKey && layerMask === this.lastSCMask) return;
@@ -1676,7 +1679,7 @@ export class DeckGLMap {
     }
 
     // Tech variant layers (Supercluster-based deck.gl layers for HQs and events)
-    if (SITE_VARIANT === 'tech') {
+    if (SITE_VARIANT === 'tech' || SITE_VARIANT === 'media') {
       if (mapLayers.startupHubs) {
         layers.push(this.createStartupHubsLayer());
       }
@@ -2125,7 +2128,7 @@ export class DeckGLMap {
 
   private createDatacentersLayer(): IconLayer {
     const highlightedDC = this.highlightedAssets.datacenter;
-    const data = AI_DATA_CENTERS.filter(dc => dc.status !== 'decommissioned');
+    const data = (SITE_VARIANT === 'media' ? MEDIA_AI_DATA_CENTERS : AI_DATA_CENTERS).filter(dc => dc.status !== 'decommissioned');
 
     // Datacenters: SQUARE icons - purple color, semi-transparent for layering
     return new IconLayer({
@@ -2845,7 +2848,7 @@ export class DeckGLMap {
   private createStartupHubsLayer(): ScatterplotLayer {
     return new ScatterplotLayer({
       id: 'startup-hubs-layer',
-      data: STARTUP_HUBS,
+      data: SITE_VARIANT === 'media' ? MEDIA_DISSEMINATION_CENTERS : STARTUP_HUBS,
       getPosition: (d) => [d.lon, d.lat],
       getRadius: 10000,
       getFillColor: COLORS.startupHub,
@@ -3197,7 +3200,7 @@ export class DeckGLMap {
   private createGulfInvestmentsLayer(): ScatterplotLayer {
     return new ScatterplotLayer<GulfInvestment>({
       id: 'gulf-investments-layer',
-      data: GULF_INVESTMENTS,
+      data: SITE_VARIANT === 'media' ? MEDIA_GOVERNMENT_NOTICES : GULF_INVESTMENTS,
       getPosition: (d: GulfInvestment) => [d.lon, d.lat],
       getRadius: (d: GulfInvestment) => {
         if (!d.investmentUSD) return 20000;
@@ -3715,7 +3718,9 @@ export class DeckGLMap {
       case 'commodity-hubs-layer':
         return { html: `<div class="deckgl-tooltip"><strong>${text(obj.name)}</strong><br/>${text(obj.type)} · ${text(obj.city)}</div>` };
       case 'startup-hubs-layer':
-        return { html: `<div class="deckgl-tooltip"><strong>${text(obj.city)}</strong><br/>${text(obj.country)}</div>` };
+        return SITE_VARIANT === 'media'
+          ? { html: `<div class="deckgl-tooltip"><strong>${text(obj.name)}</strong><br/>${text(obj.city)} · ${text(obj.country)}</div>` }
+          : { html: `<div class="deckgl-tooltip"><strong>${text(obj.city)}</strong><br/>${text(obj.country)}</div>` };
       case 'tech-hqs-layer':
         return { html: `<div class="deckgl-tooltip"><strong>${text(obj.company)}</strong><br/>${text(obj.city)}</div>` };
       case 'accelerators-layer':
@@ -3849,6 +3854,16 @@ export class DeckGLMap {
       }
       case 'gulf-investments-layer': {
         const inv = obj as GulfInvestment;
+        if (SITE_VARIANT === 'media') {
+          return {
+            html: `<div class="deckgl-tooltip">
+              <strong>📢 ${text(inv.assetName)}</strong><br/>
+              <em>${text(inv.investingEntity)}</em><br/>
+              ${text(inv.targetCountry)} · ${text(inv.assetType)}<br/>
+              <span style="opacity:.8">${text(inv.description || '')}</span>
+            </div>`,
+          };
+        }
         const flag = inv.investingCountry === 'SA' ? '🇸🇦' : '🇦🇪';
         const usd = inv.investmentUSD != null
           ? (inv.investmentUSD >= 1000 ? `$${(inv.investmentUSD / 1000).toFixed(1)}B` : `$${inv.investmentUSD}M`)
@@ -3925,7 +3940,7 @@ export class DeckGLMap {
         x: info.x,
         y: info.y,
       });
-      this.popup.loadHotspotGdeltContext(hotspot);
+      this.popup.loadHotspotGdeltContext(hotspot, relatedNews);
       this.onHotspotClick?.(hotspot);
       return;
     }
@@ -4065,6 +4080,16 @@ export class DeckGLMap {
 
     if (layerId === 'webcam-layer' && !('count' in info.object)) {
       this.showWebcamClickPopup(info.object as WebcamEntry, info.x, info.y);
+      return;
+    }
+
+    if (SITE_VARIANT === 'media' && layerId === 'gulf-investments-layer') {
+      this.popup.show({
+        type: 'mediaNotice',
+        data: info.object as GulfInvestment,
+        x: info.x,
+        y: info.y,
+      });
       return;
     }
 
@@ -5651,7 +5676,7 @@ export class DeckGLMap {
       x,
       y,
     });
-    this.popup.loadHotspotGdeltContext(hotspot);
+    this.popup.loadHotspotGdeltContext(hotspot, relatedNews);
     this.onHotspotClick?.(hotspot);
   }
 

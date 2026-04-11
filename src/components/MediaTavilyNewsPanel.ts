@@ -1,7 +1,10 @@
 import { Panel } from './Panel';
 import { fetchMediaTavilyNews, summarizeMediaNewsItem, type MediaTavilyNewsItem } from '@/services/media-tavily-news';
+import { MediaDetailModal } from './MediaDetailModal';
+import { markMediaBridgeInterpreted, setMediaBridgeItems } from '@/services/media-news-bridge';
 import { escapeHtml, sanitizeUrl } from '@/utils/sanitize';
 import { t } from '@/services/i18n';
+import type { NewsItem } from '@/types';
 
 function relativeTime(ts: number): string {
   const diff = Math.max(0, Date.now() - ts);
@@ -16,6 +19,7 @@ export class MediaTavilyNewsPanel extends Panel {
   private expanded = new Map<string, string>();
   private didRetry = false;
   private loadingIndexes = new Set<number>();
+  private modal = new MediaDetailModal();
 
   constructor() {
     super({
@@ -56,9 +60,11 @@ export class MediaTavilyNewsPanel extends Panel {
         const retryResult = await fetchMediaTavilyNews(12, 14);
         this.items = retryResult.items;
       }
+      setMediaBridgeItems(this.items.map((item) => this.toNewsItem(item)));
       this.setCount(this.items.length);
       this.renderPanel();
     } catch (error) {
+      setMediaBridgeItems([]);
       const message = error instanceof Error ? error.message : 'Failed to load';
       this.showError(message, () => { void this.load(); });
     }
@@ -86,28 +92,29 @@ export class MediaTavilyNewsPanel extends Panel {
     if (!item || this.loadingIndexes.has(index)) return;
 
     const cacheKey = item.url || item.title;
-    const summaryEl = this.content.querySelector<HTMLElement>(`[data-ai-news-summary="${index}"]`);
-    if (!summaryEl) return;
+    const relatedItems = this.items
+      .filter((candidate, candidateIndex) => candidateIndex !== index && this.shareTopic(item, candidate))
+      .slice(0, 5);
 
     if (this.expanded.has(cacheKey)) {
-      summaryEl.textContent = this.expanded.get(cacheKey) || '';
-      summaryEl.style.display = summaryEl.style.display === 'none' ? '' : 'none';
+      this.openDetailModal(item, this.expanded.get(cacheKey) || '', relatedItems);
       return;
     }
 
     this.loadingIndexes.add(index);
     button.disabled = true;
     button.textContent = '…';
-    summaryEl.style.display = '';
-    summaryEl.textContent = 'AI 解读生成中...';
+
+    this.openLoadingModal(item, relatedItems);
 
     try {
       const result = await summarizeMediaNewsItem(item);
       const summary = result || '当前无法生成 AI 解读。';
       this.expanded.set(cacheKey, summary);
-      summaryEl.textContent = summary;
+      markMediaBridgeInterpreted({ source: item.source, title: item.title });
+      this.openDetailModal(item, summary, relatedItems);
     } catch {
-      summaryEl.textContent = '当前无法生成 AI 解读。';
+      this.openDetailModal(item, '当前无法生成 AI 解读。', relatedItems);
     } finally {
       this.loadingIndexes.delete(index);
       button.disabled = false;
@@ -127,8 +134,106 @@ export class MediaTavilyNewsPanel extends Panel {
         </div>
         <div style="margin-top:4px;font-size:10px;color:var(--text-dim)">${escapeHtml(item.source)} · ${escapeHtml(relativeTime(item.publishedAt))}</div>
         ${item.summary ? `<div style="margin-top:8px;font-size:11px;color:var(--text-dim);line-height:1.5">${escapeHtml(item.summary.slice(0, 180))}</div>` : ''}
-        <div data-ai-news-summary="${index}" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.6;color:var(--text)"></div>
       </article>
     `;
+  }
+
+  private openLoadingModal(item: MediaTavilyNewsItem, relatedItems: MediaTavilyNewsItem[]): void {
+    this.modal.show({
+      title: item.title,
+      subtitle: `${item.source} · ${relativeTime(item.publishedAt)}。正在生成 AI 解读，并同步转化为监测主题与选题线索。`,
+      tags: ['Tavily 媒体新闻', item.source, 'AI 解读'],
+      sections: [
+        {
+          title: '基础内容',
+          content: item.summary || '该新闻未附带摘要，建议结合原文与关联报道判断平台动作、受众反馈和商业影响。',
+        },
+        {
+          title: '联动说明',
+          content: '这条新闻会被纳入传媒监测主题与选题指挥板，便于后续在经营雷达和快速跟进队列中继续追踪。',
+        },
+      ],
+      links: [
+        {
+          label: item.title,
+          href: item.url,
+          meta: item.source,
+        },
+        ...relatedItems.map((related) => ({
+          label: related.title,
+          href: related.url,
+          meta: `${related.source} · ${relativeTime(related.publishedAt)}`,
+        })),
+      ],
+      analysisTitle: 'AI 解读',
+      analysisLoadingText: 'AI 解读生成中...',
+      analysisPromise: Promise.resolve('AI 解读生成中...'),
+    });
+  }
+
+  private openDetailModal(item: MediaTavilyNewsItem, summary: string, relatedItems: MediaTavilyNewsItem[]): void {
+    this.modal.show({
+      title: item.title,
+      subtitle: `${item.source} · ${relativeTime(item.publishedAt)}。该新闻已同步纳入监测主题与选题指挥版。`,
+      tags: ['Tavily 媒体新闻', item.source, '已转化'],
+      sections: [
+        {
+          title: '基础内容',
+          content: item.summary || '该新闻未附带摘要，建议结合原文继续确认平台动作、品牌预算与传播影响。',
+        },
+        {
+          title: '转化结果',
+          content: '该新闻已作为传媒信号并入监测主题、选题指挥板和经营雷达，可继续从平台分发、AI版权、创作者生态、品牌舆情等方向拆解。',
+        },
+      ],
+      links: [
+        {
+          label: item.title,
+          href: item.url,
+          meta: item.source,
+        },
+        ...relatedItems.map((related) => ({
+          label: related.title,
+          href: related.url,
+          meta: `${related.source} · ${relativeTime(related.publishedAt)}`,
+        })),
+      ],
+      analysisTitle: 'AI 解读',
+      analysisPromise: Promise.resolve(summary),
+    });
+  }
+
+  private shareTopic(base: MediaTavilyNewsItem, candidate: MediaTavilyNewsItem): boolean {
+    const patterns = [
+      /platform|algorithm|distribution|recommend|youtube|tiktok|platform|平台|分发|推荐|流量/i,
+      /ai|model|copyright|synthetic|人工智能|大模型|版权|AIGC/i,
+      /creator|audience|subscription|influencer|创作者|用户|订阅|粉丝/i,
+      /advertis|brand|campaign|marketing|广告|品牌|投放|营销/i,
+      /regulation|policy|law|compliance|监管|政策|法规|合规/i,
+      /entertainment|celebrity|drama|movie|music|gaming|文娱|影视|综艺|音乐|游戏|热点/i,
+    ];
+    return patterns.some((pattern) => pattern.test(base.title) && pattern.test(candidate.title));
+  }
+
+  private toNewsItem(item: MediaTavilyNewsItem): NewsItem {
+    return {
+      source: item.source,
+      title: item.title,
+      link: item.url,
+      pubDate: new Date(item.publishedAt),
+      isAlert: /regulation|ban|lawsuit|copyright|layoff|boycott|crisis|监管|封禁|诉讼|版权|裁员|危机/i.test(item.title),
+      threat: {
+        level: /ban|lawsuit|crisis|boycott|监管|封禁|诉讼|危机/i.test(item.title) ? 'high' : /ai|platform|advertis|creator|文娱|热点/i.test(item.title) ? 'medium' : 'low',
+        category: 'general',
+        confidence: 0.72,
+        source: 'keyword',
+      },
+      storyMeta: {
+        firstSeen: item.publishedAt,
+        mentionCount: 1,
+        sourceCount: 1,
+        phase: 'developing',
+      },
+    };
   }
 }

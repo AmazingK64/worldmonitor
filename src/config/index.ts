@@ -129,6 +129,9 @@ export {
   MEDIA_HOTSPOTS,
   MEDIA_DEMANDS,
   MEDIA_EVENTS,
+  MEDIA_DISSEMINATION_CENTERS,
+  MEDIA_AI_DATA_CENTERS,
+  MEDIA_GOVERNMENT_NOTICES,
 } from './media-geo';
 
 // Gulf FDI investment database

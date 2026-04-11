@@ -12472,6 +12472,10 @@ a.prediction-link:hover {
   background: var(--darken-heavy);
 }
 
+.hotspot-gdelt-article-static {
+  cursor: default;
+}
+
 .hotspot-gdelt-article .article-meta {
   display: flex;
   justify-content: space-between;

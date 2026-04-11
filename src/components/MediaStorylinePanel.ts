@@ -2,6 +2,14 @@ import { Panel } from './Panel';
 import { MediaDetailModal } from './MediaDetailModal';
 import { getCurrentLanguage, t } from '@/services/i18n';
 import { generateMediaTopicAnalysis } from '@/services/media-analysis';
+import {
+  getMediaBridgeItems,
+  getMediaBridgeInterpretedKeys,
+  getMediaBridgeInterpretedMeta,
+  subscribeMediaBridgeInterpretation,
+  subscribeMediaBridgeInterpretationMeta,
+  subscribeMediaBridgeItems,
+} from '@/services/media-news-bridge';
 import type { NewsItem } from '@/types';
 import { escapeHtml } from '@/utils/sanitize';
 
@@ -39,7 +47,13 @@ function hoursAgo(date: Date): number {
 
 export class MediaStorylinePanel extends Panel {
   private items: NewsItem[] = [];
+  private bridgeItems: NewsItem[] = getMediaBridgeItems();
+  private interpretedKeys = getMediaBridgeInterpretedKeys();
+  private interpretedMeta = getMediaBridgeInterpretedMeta();
   private modal = new MediaDetailModal();
+  private unsubscribeBridge: (() => void) | null = null;
+  private unsubscribeInterpretation: (() => void) | null = null;
+  private unsubscribeInterpretationMeta: (() => void) | null = null;
 
   constructor() {
     super({
@@ -49,11 +63,39 @@ export class MediaStorylinePanel extends Panel {
       infoTooltip: t('components.mediaStoryline.infoTooltip'),
     });
     this.content.addEventListener('click', (event) => {
+      const metricTrigger = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-storyline-metric]');
+      if (metricTrigger) {
+        event.preventDefault();
+        const metric = metricTrigger.dataset.storylineMetric as 'topics' | 'alerts' | 'sources' | undefined;
+        if (metric) this.openMetricDetail(metric);
+        return;
+      }
+
       const trigger = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-storyline-angle-index]');
-      if (!trigger) return;
+      if (trigger) {
+        event.preventDefault();
+        const index = Number(trigger.dataset.storylineAngleIndex || -1);
+        if (index >= 0) this.openAngleDetail(index);
+        return;
+      }
+
+      const followUpTrigger = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-storyline-followup-index]');
+      if (!followUpTrigger) return;
       event.preventDefault();
-      const index = Number(trigger.dataset.storylineAngleIndex || -1);
-      if (index >= 0) this.openAngleDetail(index);
+      const index = Number(followUpTrigger.dataset.storylineFollowupIndex || -1);
+      if (index >= 0) this.openFollowUpDetail(index);
+    });
+    this.unsubscribeBridge = subscribeMediaBridgeItems((items) => {
+      this.bridgeItems = items;
+      this.renderPanel();
+    });
+    this.unsubscribeInterpretation = subscribeMediaBridgeInterpretation((keys) => {
+      this.interpretedKeys = keys;
+      this.renderPanel();
+    });
+    this.unsubscribeInterpretationMeta = subscribeMediaBridgeInterpretationMeta((meta) => {
+      this.interpretedMeta = meta;
+      this.renderPanel();
     });
     this.renderPanel();
   }
@@ -66,19 +108,30 @@ export class MediaStorylinePanel extends Panel {
   }
 
   private renderPanel(): void {
-    const recent = this.items.filter((item) => hoursAgo(item.pubDate) <= 18);
+    const recent = this.getMergedItems().filter((item) => hoursAgo(item.pubDate) <= 18);
     const trackedSources = new Set(recent.map((item) => item.source)).size;
     const criticalCount = recent.filter((item) => item.isAlert || item.threat?.level === 'critical' || item.threat?.level === 'high').length;
     const plannedAngles = this.buildAngles(recent);
     const followUps = recent.slice(0, 4);
+    const recentAiBoostCount = recent.filter((item) => this.isFreshHighlightedItem(item)).length;
 
     this.setCount(plannedAngles.length);
     this.setContent(`
       <div style="display:grid;gap:12px">
+        ${this.renderPulseStyles()}
+        ${recentAiBoostCount > 0 ? `
+          <div style="padding:10px 12px;border:1px solid rgba(16,185,129,0.36);border-radius:12px;background:linear-gradient(135deg, rgba(16,185,129,0.16), rgba(56,189,248,0.12));box-shadow:0 12px 30px rgba(16,185,129,0.12);animation:media-ai-pulse 1.5s ease-in-out 3">
+            <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+              <strong style="font-size:12px;color:#d1fae5">AI 解读已同步</strong>
+              <span style="padding:2px 8px;border-radius:999px;background:rgba(255,255,255,0.12);font-size:10px;font-weight:700;color:#ecfeff;animation:media-ai-chip-pulse 1.2s ease-in-out 4">+${recentAiBoostCount}</span>
+            </div>
+            <div style="margin-top:4px;font-size:11px;line-height:1.5;color:rgba(236,253,245,0.92)">新增内容已推送到选题方向和快速跟进队列，带有 <strong style="color:#86efac">NEW</strong> 与 <strong style="color:#86efac">AI 已解读</strong> 标记。</div>
+          </div>
+        ` : ''}
         <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
-          ${this.renderMetric(t('components.mediaStoryline.metricTopics'), String(plannedAngles.length || 0), t('components.mediaStoryline.metricTopicsHint'))}
-          ${this.renderMetric(t('components.mediaStoryline.metricAlerts'), String(criticalCount), t('components.mediaStoryline.metricAlertsHint'))}
-          ${this.renderMetric(t('components.mediaStoryline.metricSources'), String(trackedSources), t('components.mediaStoryline.metricSourcesHint'))}
+          ${this.renderMetric('topics', t('components.mediaStoryline.metricTopics'), String(plannedAngles.length || 0), t('components.mediaStoryline.metricTopicsHint'))}
+          ${this.renderMetric('alerts', t('components.mediaStoryline.metricAlerts'), String(criticalCount), t('components.mediaStoryline.metricAlertsHint'))}
+          ${this.renderMetric('sources', t('components.mediaStoryline.metricSources'), String(trackedSources), t('components.mediaStoryline.metricSourcesHint'))}
         </div>
 
         <section style="padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,0.03)">
@@ -89,11 +142,11 @@ export class MediaStorylinePanel extends Panel {
           <div style="display:grid;gap:8px">
             ${plannedAngles.length > 0
               ? plannedAngles.map((angle, index) => `
-                <div style="display:flex;gap:10px;align-items:flex-start">
+                <div style="display:flex;gap:10px;align-items:flex-start;${this.highlightBlockStyle(this.hasHighlightedRelatedItems(angle.relatedItems), this.hasFreshHighlightedRelatedItems(angle.relatedItems))}">
                   <span style="min-width:18px;height:18px;border-radius:999px;background:rgba(99,102,241,0.18);color:#c7d2fe;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">${index + 1}</span>
                   <div style="min-width:0">
                     <button type="button" data-storyline-angle-index="${index}" style="padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer">
-                      <div style="font-size:12px;font-weight:600">${escapeHtml(angle.name)}</div>
+                      <div style="font-size:12px;font-weight:600">${escapeHtml(angle.name)}${this.hasHighlightedRelatedItems(angle.relatedItems) ? `<span style="margin-left:6px;padding:2px 6px;border-radius:999px;background:rgba(16,185,129,0.18);color:#86efac;font-size:10px;font-weight:700;${this.hasFreshHighlightedRelatedItems(angle.relatedItems) ? 'animation:media-ai-chip-pulse 1.2s ease-in-out 4;' : ''}">AI 已解读</span>` : ''}</div>
                     </button>
                     <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${escapeHtml(t('components.mediaStoryline.angleMentions', { count: String(angle.count) }))}</div>
                   </div>
@@ -108,10 +161,17 @@ export class MediaStorylinePanel extends Panel {
           <div style="display:grid;gap:8px">
             ${followUps.length > 0
               ? followUps.map((item) => `
-                <div style="padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06)">
-                  <div style="font-size:12px;line-height:1.45">${escapeHtml(item.title)}</div>
+                <button
+                  type="button"
+                  data-storyline-followup-index="${followUps.indexOf(item)}"
+                  style="padding:10px 12px;border:1px solid ${this.isHighlightedItem(item) ? 'rgba(16,185,129,0.45)' : 'rgba(255,255,255,0.06)'};border-radius:12px;background:${this.isHighlightedItem(item) ? 'linear-gradient(135deg, rgba(16,185,129,0.14), rgba(56,189,248,0.10))' : 'none'};color:inherit;text-align:left;cursor:pointer;box-shadow:${this.isHighlightedItem(item) ? '0 0 0 1px rgba(16,185,129,0.12), 0 10px 24px rgba(16,185,129,0.08)' : 'none'};${this.isFreshHighlightedItem(item) ? 'animation:media-ai-pulse 1.5s ease-in-out 3;' : ''}"
+                >
+                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+                    <div style="font-size:12px;line-height:1.45">${escapeHtml(item.title)}</div>
+                    ${this.isHighlightedItem(item) ? `<span style="flex-shrink:0;padding:2px 6px;border-radius:999px;background:rgba(16,185,129,0.18);color:#86efac;font-size:10px;font-weight:700;${this.isFreshHighlightedItem(item) ? 'animation:media-ai-chip-pulse 1.2s ease-in-out 4;' : ''}">NEW</span>` : ''}
+                  </div>
                   <div style="margin-top:4px;font-size:10px;color:var(--text-dim)">${escapeHtml(item.source)} · ${escapeHtml(this.relativeTime(item.pubDate))}</div>
-                </div>
+                </button>
               `).join('')
               : `<div style="font-size:12px;color:var(--text-dim)">${escapeHtml(t('components.mediaStoryline.empty'))}</div>`}
           </div>
@@ -145,7 +205,7 @@ export class MediaStorylinePanel extends Panel {
   }
 
   private openAngleDetail(index: number): void {
-    const recent = this.items.filter((item) => hoursAgo(item.pubDate) <= 18);
+    const recent = this.getMergedItems().filter((item) => hoursAgo(item.pubDate) <= 18);
     const plannedAngles = this.buildAngles(recent);
     const angle = plannedAngles[index];
     if (!angle) return;
@@ -179,13 +239,241 @@ export class MediaStorylinePanel extends Panel {
     });
   }
 
-  private renderMetric(label: string, value: string, hint: string): string {
+  private openFollowUpDetail(index: number): void {
+    const recent = this.getMergedItems().filter((item) => hoursAgo(item.pubDate) <= 18);
+    const followUps = recent.slice(0, 4);
+    const item = followUps[index];
+    if (!item) return;
+
+    const relatedItems = recent
+      .filter((candidate) => candidate !== item && this.shareTopicBucket(item, candidate))
+      .slice(0, 5);
+
+    const tags = [
+      '快速跟进队列',
+      item.source,
+      item.isAlert || item.threat?.level === 'critical' || item.threat?.level === 'high' ? '高优先级' : '持续跟进',
+    ];
+
+    this.modal.show({
+      title: item.title,
+      subtitle: `${item.source} · ${this.relativeTime(item.pubDate)}。适合快速转化为快讯、延伸稿或专题切口。`,
+      tags,
+      sections: [
+        {
+          title: '基本内容',
+          content: this.buildFollowUpSummary(item, relatedItems),
+        },
+        {
+          title: '建议跟进动作',
+          content: '优先确认这条信号是单点事件还是行业趋势；再判断是否需要补平台策略、品牌预算、版权合规或用户增长角度。',
+        },
+      ],
+      links: [
+        {
+          label: item.title,
+          href: item.link,
+          meta: `${item.source} · ${this.relativeTime(item.pubDate)}`,
+        },
+        ...relatedItems.map((related) => ({
+          label: related.title,
+          href: related.link,
+          meta: `${related.source} · ${this.relativeTime(related.pubDate)}`,
+        })),
+      ],
+      analysisTitle: 'AI 分析结果',
+      analysisPromise: generateMediaTopicAnalysis(
+        item.title,
+        [item, ...relatedItems].map((news) => ({ title: news.title, source: news.source })),
+        'storyline',
+      ),
+    });
+  }
+
+  private openMetricDetail(metric: 'topics' | 'alerts' | 'sources'): void {
+    const recent = this.getMergedItems().filter((item) => hoursAgo(item.pubDate) <= 18);
+    const plannedAngles = this.buildAngles(recent);
+    const criticalItems = recent
+      .filter((item) => item.isAlert || item.threat?.level === 'critical' || item.threat?.level === 'high')
+      .slice(0, 8);
+    const sources = [...new Set(recent.map((item) => item.source))];
+
+    if (metric === 'topics') {
+      this.modal.show({
+        title: t('components.mediaStoryline.metricTopics'),
+        subtitle: `当前共形成 ${plannedAngles.length} 个主线主题，点击下方链接可继续查看代表性信号。`,
+        tags: ['主线主题', '选题指挥版'],
+        sections: [
+          {
+            title: '基本内容',
+            content: plannedAngles.length > 0
+              ? plannedAngles.map((angle, index) => `${index + 1}. ${angle.name}（${angle.count} 条）`).join('；')
+              : '当前暂无可用主线主题。',
+          },
+          {
+            title: 'AI 分析建议',
+            content: '优先选择跨来源重复出现、可延伸为快讯与深度稿的主题，避免只跟单一事件点。',
+          },
+        ],
+        links: plannedAngles.flatMap((angle) => angle.relatedItems.slice(0, 2)).slice(0, 8).map((item) => ({
+          label: item.title,
+          href: item.link,
+          meta: `${item.source} · ${this.relativeTime(item.pubDate)}`,
+        })),
+        analysisTitle: 'AI 分析主线主题',
+        analysisPromise: generateMediaTopicAnalysis(
+          '主线主题',
+          plannedAngles.flatMap((angle) => angle.relatedItems).slice(0, 8).map((item) => ({ title: item.title, source: item.source })),
+          'storyline',
+        ),
+      });
+      return;
+    }
+
+    if (metric === 'alerts') {
+      this.modal.show({
+        title: t('components.mediaStoryline.metricAlerts'),
+        subtitle: `近 18 小时共识别 ${criticalItems.length} 条高优先级线索，建议优先确认平台、监管或舆情影响。`,
+        tags: ['高优先级线索', '快速跟进'],
+        sections: [
+          {
+            title: '基本内容',
+            content: criticalItems.length > 0
+              ? criticalItems.map((item, index) => `${index + 1}. ${item.title}`).join('；')
+              : '当前暂无高优先级线索。',
+          },
+          {
+            title: '建议动作',
+            content: '优先补充事件主体、时间线、影响对象与传播范围，再决定是否转成快讯或专题稿。',
+          },
+        ],
+        links: criticalItems.map((item) => ({
+          label: item.title,
+          href: item.link,
+          meta: `${item.source} · ${this.relativeTime(item.pubDate)}`,
+        })),
+        analysisTitle: 'AI 分析高优先级线索',
+        analysisPromise: generateMediaTopicAnalysis(
+          '高优先级线索',
+          criticalItems.map((item) => ({ title: item.title, source: item.source })),
+          'risk',
+        ),
+      });
+      return;
+    }
+
+    this.modal.show({
+      title: t('components.mediaStoryline.metricSources'),
+      subtitle: `近 18 小时共覆盖 ${sources.length} 个独立来源，可用于判断主题扩散程度。`,
+      tags: ['覆盖来源数', '来源监测'],
+      sections: [
+        {
+          title: '覆盖来源',
+          content: sources.length > 0 ? sources.join('、') : '当前暂无可用来源。',
+        },
+        {
+          title: '观察建议',
+          content: '优先关注是否已形成跨来源共振；若来源集中，说明主题仍处于早期发酵阶段。',
+        },
+      ],
+      links: recent.slice(0, 8).map((item) => ({
+        label: item.title,
+        href: item.link,
+        meta: `${item.source} · ${this.relativeTime(item.pubDate)}`,
+      })),
+      analysisTitle: 'AI 分析来源覆盖',
+      analysisPromise: generateMediaTopicAnalysis(
+        '覆盖来源数',
+        recent.slice(0, 8).map((item) => ({ title: item.title, source: item.source })),
+        'signal',
+      ),
+    });
+  }
+
+  private shareTopicBucket(base: NewsItem, candidate: NewsItem): boolean {
+    return TOPIC_BUCKETS.some((bucket) => bucket.patterns.some((pattern) => pattern.test(base.title)) && bucket.patterns.some((pattern) => pattern.test(candidate.title)));
+  }
+
+  private buildFollowUpSummary(item: NewsItem, relatedItems: NewsItem[]): string {
+    const relatedSources = [...new Set(relatedItems.map((news) => news.source))].slice(0, 3);
+    const threatLabel = item.isAlert || item.threat?.level === 'critical' || item.threat?.level === 'high'
+      ? '当前信号强度较高，适合优先跟进。'
+      : '当前信号处于持续发酵阶段，适合做二次延展。';
+
+    return [
+      `核心线索来自 ${item.source}，标题聚焦“${item.title}”。`,
+      relatedSources.length > 0 ? `同类信号还出现在 ${relatedSources.join('、')} 等来源，说明该议题已有跨源扩散迹象。` : '当前可先从原始报道切入，补充关联来源与平台反馈。',
+      `${threatLabel} 建议优先确认事件主体、平台动作、商业影响和监管表态。`,
+    ].join('');
+  }
+
+  private getMergedItems(): NewsItem[] {
+    const seen = new Set<string>();
+    return [...this.bridgeItems, ...this.items]
+      .filter((item) => {
+        const key = `${item.source}::${item.title}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime())
+      .slice(0, 220);
+  }
+
+  public override destroy(): void {
+    this.unsubscribeBridge?.();
+    this.unsubscribeBridge = null;
+    this.unsubscribeInterpretation?.();
+    this.unsubscribeInterpretation = null;
+    this.unsubscribeInterpretationMeta?.();
+    this.unsubscribeInterpretationMeta = null;
+    super.destroy();
+  }
+
+  private isHighlightedItem(item: NewsItem): boolean {
+    return this.interpretedKeys.has(`${item.source}::${item.title}`);
+  }
+
+  private hasHighlightedRelatedItems(items: NewsItem[]): boolean {
+    return items.some((item) => this.isHighlightedItem(item));
+  }
+
+  private hasFreshHighlightedRelatedItems(items: NewsItem[]): boolean {
+    return items.some((item) => this.isFreshHighlightedItem(item));
+  }
+
+  private isFreshHighlightedItem(item: NewsItem): boolean {
+    const ts = this.interpretedMeta.get(`${item.source}::${item.title}`);
+    return typeof ts === 'number' && Date.now() - ts <= 10 * 60 * 1000;
+  }
+
+  private highlightBlockStyle(active: boolean, fresh: boolean): string {
+    if (!active) return '';
+    return `padding:10px 12px;border-radius:14px;background:linear-gradient(135deg, rgba(16,185,129,0.14), rgba(59,130,246,0.10));box-shadow:0 0 0 1px rgba(16,185,129,0.16) inset, 0 12px 30px rgba(16,185,129,0.08);${fresh ? 'animation:media-ai-pulse 1.5s ease-in-out 3;' : ''}`;
+  }
+
+  private renderPulseStyles(): string {
     return `
-      <div style="padding:10px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,0.03)">
+      <style>
+        @keyframes media-ai-pulse {
+          0%, 100% { transform: translateZ(0); box-shadow: 0 0 0 1px rgba(16,185,129,0.12) inset, 0 10px 24px rgba(16,185,129,0.08); }
+          50% { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(52,211,153,0.32) inset, 0 16px 34px rgba(16,185,129,0.18); }
+        }
+        @keyframes media-ai-chip-pulse {
+          0%, 100% { transform: scale(1); filter: brightness(1); }
+          50% { transform: scale(1.08); filter: brightness(1.14); }
+        }
+      </style>
+    `;
+  }
+
+  private renderMetric(metric: 'topics' | 'alerts' | 'sources', label: string, value: string, hint: string): string {
+    return `
+      <button type="button" data-storyline-metric="${metric}" style="padding:10px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,0.03);color:inherit;text-align:left;cursor:pointer">
         <div style="font-size:10px;color:var(--text-dim)">${escapeHtml(label)}</div>
         <div style="margin-top:4px;font-size:18px;font-weight:700">${escapeHtml(value)}</div>
         <div style="margin-top:2px;font-size:10px;color:var(--text-dim)">${escapeHtml(hint)}</div>
-      </div>
+      </button>
     `;
   }
 

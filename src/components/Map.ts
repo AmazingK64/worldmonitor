@@ -40,6 +40,9 @@ import {
   CLOUD_REGIONS,
   MEDIA_HOTSPOTS,
   MEDIA_DEMANDS,
+  MEDIA_DISSEMINATION_CENTERS,
+  MEDIA_AI_DATA_CENTERS,
+  MEDIA_GOVERNMENT_NOTICES,
   // Finance variant data
   STOCK_EXCHANGES,
   FINANCIAL_CENTERS,
@@ -408,11 +411,12 @@ export class MapComponent {
     ];
     const mediaLayers: (keyof MapLayers)[] = [
       'hotspots',                                          // 媒体热点
-      'weather',                                           // 天气预警
       'outages',                                           // 互联网中断
       'economic',                                          // 媒体需求
       'techEvents',                                        // 媒体活动
       'datacenters',                                       // 数据中心
+      'startupHubs',                                       // 新闻传播中心
+      'gulfInvestments',                                   // 政府新闻通告
       'cables',                                            // 海底电缆
     ];
     const layers = SITE_VARIANT === 'tech' ? techLayers : SITE_VARIANT === 'finance' ? financeLayers : SITE_VARIANT === 'happy' ? happyLayers : SITE_VARIANT === 'media' ? mediaLayers : fullLayers;
@@ -426,14 +430,14 @@ export class MapComponent {
       cables: 'components.deckgl.layers.underseaCables',
       pipelines: 'components.deckgl.layers.pipelines',
       outages: 'components.deckgl.layers.internetOutages',
-      datacenters: 'components.deckgl.layers.aiDataCenters',
+      datacenters: SITE_VARIANT === 'media' ? 'components.deckgl.layers.aiMediaDataCenters' : 'components.deckgl.layers.aiDataCenters',
       ais: 'components.deckgl.layers.shipTraffic',
       flights: 'components.deckgl.layers.flightDelays',
       natural: 'components.deckgl.layers.naturalEvents',
       weather: 'components.deckgl.layers.weatherAlerts',
       economic: SITE_VARIANT === 'media' ? 'components.deckgl.layers.mediaDemands' : 'components.deckgl.layers.economicCenters',
       waterways: 'components.deckgl.layers.strategicWaterways',
-      startupHubs: 'components.deckgl.layers.startupHubs',
+      startupHubs: SITE_VARIANT === 'media' ? 'components.deckgl.layers.newsDisseminationCenters' : 'components.deckgl.layers.startupHubs',
       cloudRegions: 'components.deckgl.layers.cloudRegions',
       accelerators: 'components.deckgl.layers.accelerators',
       techHQs: 'components.deckgl.layers.techHQs',
@@ -442,7 +446,7 @@ export class MapComponent {
       financialCenters: 'components.deckgl.layers.financialCenters',
       centralBanks: 'components.deckgl.layers.centralBanks',
       commodityHubs: 'components.deckgl.layers.commodityHubs',
-      gulfInvestments: 'components.deckgl.layers.gulfInvestments',
+      gulfInvestments: SITE_VARIANT === 'media' ? 'components.deckgl.layers.governmentNewsNotices' : 'components.deckgl.layers.gulfInvestments',
       iranAttacks: 'components.deckgl.layers.iranAttacks',
       gpsJamming: 'components.deckgl.layers.gpsJamming',
       ciiChoropleth: 'components.deckgl.layers.ciiChoropleth',
@@ -668,14 +672,15 @@ export class MapComponent {
     const legend = document.createElement('div');
     legend.className = 'map-legend';
 
-    if (SITE_VARIANT === 'tech') {
-      // Tech variant legend
+    if (SITE_VARIANT === 'tech' || SITE_VARIANT === 'media') {
+      // Tech/media variant legend
       legend.innerHTML = `
         <div class="map-legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>${escapeHtml(t('components.deckgl.layers.techHQs').toUpperCase())}</div>
-        <div class="map-legend-item"><span class="legend-dot" style="background:#06b6d4"></span>${escapeHtml(t('components.deckgl.layers.startupHubs').toUpperCase())}</div>
+        <div class="map-legend-item"><span class="legend-dot" style="background:#06b6d4"></span>${escapeHtml(t(SITE_VARIANT === 'media' ? 'components.deckgl.layers.newsDisseminationCenters' : 'components.deckgl.layers.startupHubs').toUpperCase())}</div>
         <div class="map-legend-item"><span class="legend-dot" style="background:#f59e0b"></span>${escapeHtml(t('components.deckgl.layers.cloudRegions').toUpperCase())}</div>
-        <div class="map-legend-item"><span class="map-legend-icon" style="color:#a855f7">📅</span>${escapeHtml(t('components.deckgl.layers.techEvents').toUpperCase())}</div>
-        <div class="map-legend-item"><span class="map-legend-icon" style="color:#4ecdc4">💾</span>${escapeHtml(t('components.deckgl.layers.aiDataCenters').toUpperCase())}</div>
+        <div class="map-legend-item"><span class="map-legend-icon" style="color:#a855f7">📅</span>${escapeHtml(t(SITE_VARIANT === 'media' ? 'components.deckgl.layers.mediaEvents' : 'components.deckgl.layers.techEvents').toUpperCase())}</div>
+        <div class="map-legend-item"><span class="map-legend-icon" style="color:#4ecdc4">💾</span>${escapeHtml(t(SITE_VARIANT === 'media' ? 'components.deckgl.layers.aiMediaDataCenters' : 'components.deckgl.layers.aiDataCenters').toUpperCase())}</div>
+        ${SITE_VARIANT === 'media' ? `<div class="map-legend-item"><span class="map-legend-icon" style="color:#f97316">📢</span>${escapeHtml(t('components.deckgl.layers.governmentNewsNotices').toUpperCase())}</div>` : ''}
       `;
     } else if (SITE_VARIANT === 'happy') {
       // Happy variant legend — natural events only
@@ -1858,7 +1863,8 @@ export class MapComponent {
     // AI Data Centers (always HTML - 🖥️ icons, filter to ≥10k GPUs)
     const MIN_GPU_COUNT = 10000;
     if (this.state.layers.datacenters) {
-      AI_DATA_CENTERS.filter(dc => (dc.chipCount || 0) >= MIN_GPU_COUNT).forEach((dc) => {
+      const datacenters = SITE_VARIANT === 'media' ? MEDIA_AI_DATA_CENTERS : AI_DATA_CENTERS;
+      datacenters.filter(dc => (dc.chipCount || 0) >= MIN_GPU_COUNT).forEach((dc) => {
         const pos = projection([dc.lon, dc.lat]);
         if (!pos) return;
 
@@ -1965,7 +1971,8 @@ export class MapComponent {
 
     // Startup Hubs (🚀 icon by tier)
     if (this.state.layers.startupHubs) {
-      STARTUP_HUBS.forEach((hub) => {
+      const startupHubs = SITE_VARIANT === 'media' ? MEDIA_DISSEMINATION_CENTERS : STARTUP_HUBS;
+      startupHubs.forEach((hub) => {
         const pos = projection([hub.lon, hub.lat]);
         if (!pos) return;
 
@@ -1976,7 +1983,9 @@ export class MapComponent {
 
         const icon = document.createElement('div');
         icon.className = 'startup-hub-icon';
-        icon.textContent = hub.tier === 'mega' ? '🦄' : hub.tier === 'major' ? '🚀' : '💡';
+        icon.textContent = SITE_VARIANT === 'media'
+          ? hub.tier === 'mega' ? '🛰️' : hub.tier === 'major' ? '📰' : '📡'
+          : hub.tier === 'mega' ? '🦄' : hub.tier === 'major' ? '🚀' : '💡';
         div.appendChild(icon);
 
         if (this.state.zoom >= 2 || hub.tier === 'mega') {
@@ -1992,6 +2001,43 @@ export class MapComponent {
           this.popup.show({
             type: 'startupHub',
             data: hub,
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+          });
+        });
+
+        this.overlays.appendChild(div);
+      });
+    }
+
+    if (SITE_VARIANT === 'media' && this.state.layers.gulfInvestments) {
+      MEDIA_GOVERNMENT_NOTICES.forEach((notice) => {
+        const pos = projection([notice.lon, notice.lat]);
+        if (!pos) return;
+
+        const div = document.createElement('div');
+        div.className = `startup-hub-marker ${notice.status}`;
+        div.style.left = `${pos[0]}px`;
+        div.style.top = `${pos[1]}px`;
+
+        const icon = document.createElement('div');
+        icon.className = 'startup-hub-icon';
+        icon.textContent = '📢';
+        div.appendChild(icon);
+
+        if (this.state.zoom >= 2) {
+          const label = document.createElement('div');
+          label.className = 'startup-hub-label';
+          label.textContent = notice.assetName;
+          div.appendChild(label);
+        }
+
+        div.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const rect = this.container.getBoundingClientRect();
+          this.popup.show({
+            type: 'mediaNotice',
+            data: notice,
             x: e.clientX - rect.left,
             y: e.clientY - rect.top,
           });
@@ -3476,7 +3522,7 @@ export class MapComponent {
       x: pos[0],
       y: pos[1],
     });
-    this.popup.loadHotspotGdeltContext(hotspot);
+    this.popup.loadHotspotGdeltContext(hotspot, relatedNews);
     this.onHotspotClick?.(hotspot);
   }
 
@@ -3555,7 +3601,8 @@ export class MapComponent {
   }
 
   public triggerDatacenterClick(id: string): void {
-    const dc = AI_DATA_CENTERS.find(d => d.id === id);
+    const datacenters = SITE_VARIANT === 'media' ? MEDIA_AI_DATA_CENTERS : AI_DATA_CENTERS;
+    const dc = datacenters.find(d => d.id === id);
     if (!dc) return;
 
     const width = this.container.clientWidth;
