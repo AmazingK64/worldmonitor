@@ -3,7 +3,7 @@
 // Probes provider URLs with a fast request, caches results.
 // All LLM call sites check this before attempting expensive fetch calls.
 
-const PROBE_TIMEOUT_MS = 2_000;
+const PROBE_TIMEOUT_MS = 5_000;
 const CACHE_TTL_MS = 60_000; // re-probe every 60s
 
 interface HealthEntry {
@@ -22,11 +22,11 @@ const inFlight = new Map<string, Promise<boolean>>();
 async function probe(url: string): Promise<boolean> {
   try {
     const origin = new URL(url).origin;
-    await fetch(origin, {
+    const response = await fetch(origin, {
       method: 'GET',
       signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
     });
-    return true;
+    return response.status < 500;
   } catch {
     return false;
   }

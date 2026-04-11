@@ -4,6 +4,7 @@ import { NewsServiceClient } from '@/generated/client/worldmonitor/news/v1/servi
 import { buildSummaryCacheKey } from '@/utils/summary-cache-key';
 import { isFeatureAvailable } from './runtime-config';
 import type { SummarizationProvider, SummarizationResult } from './summarization';
+import { generateSummary } from './summarization';
 
 interface ApiProviderDef {
   featureId: 'aiOllama' | 'aiGroq' | 'aiOpenRouter';
@@ -17,6 +18,13 @@ const API_PROVIDERS: ApiProviderDef[] = [
   { featureId: 'aiGroq', provider: 'groq' },
   { featureId: 'aiOpenRouter', provider: 'openrouter' },
 ];
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
 
 export async function generateEventBrief(
   headlines: string[],
@@ -45,7 +53,7 @@ export async function generateEventBrief(
   for (const providerDef of API_PROVIDERS) {
     if (!isFeatureAvailable(providerDef.featureId)) continue;
     try {
-      const resp = await newsClient.summarizeArticle({
+      const resp = await withTimeout(newsClient.summarizeArticle({
         provider: providerDef.provider,
         headlines: cleaned,
         mode: 'event-brief',
@@ -53,7 +61,7 @@ export async function generateEventBrief(
         variant: SITE_VARIANT,
         lang,
         systemAppend: '',
-      }, { signal });
+      }, { signal }), 14_000);
 
       if (resp.status === 'SUMMARIZE_STATUS_SKIPPED' || resp.fallback) continue;
       const summary = typeof resp.summary === 'string' ? resp.summary.trim() : '';
@@ -68,6 +76,22 @@ export async function generateEventBrief(
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') throw error;
     }
+  }
+
+  const browserFallback = await generateSummary(
+    cleaned.length >= 2 ? cleaned : [cleaned[0] || geoContext || 'Event', geoContext || 'Event context'],
+    undefined,
+    geoContext,
+    lang,
+    { skipCloudProviders: true, skipBrowserFallback: false },
+  );
+  if (browserFallback?.summary) {
+    return {
+      summary: browserFallback.summary,
+      provider: browserFallback.provider,
+      model: browserFallback.model,
+      cached: browserFallback.cached,
+    };
   }
 
   return null;

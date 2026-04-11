@@ -8,7 +8,6 @@ import type { PredictionMarket } from '@/services/prediction';
 import type { AssetType, NewsItem, RelatedAsset } from '@/types';
 import { sanitizeUrl } from '@/utils/sanitize';
 import { formatIntelBrief } from '@/utils/format-intel-brief';
-import { getCSSColor } from '@/utils';
 import { toFlagEmoji } from '@/utils/country-flag';
 import { PORTS } from '@/config/ports';
 import { haversineDistanceKm } from '@/services/related-assets';
@@ -24,7 +23,6 @@ import type {
   CountryEnergyProfileData,
 } from './CountryBriefPanel';
 import type { MapContainer } from './MapContainer';
-import { ResilienceWidget } from './ResilienceWidget';
 import { toApiUrl } from '@/services/runtime';
 import type { ComputeEnergyShockScenarioResponse, ProductImpact } from '@/generated/client/worldmonitor/intelligence/v1/service_client';
 
@@ -77,10 +75,8 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
   private marketsBody: HTMLElement | null = null;
   private briefBody: HTMLElement | null = null;
   private timelineBody: HTMLElement | null = null;
-  private scoreCard: HTMLElement | null = null;
   private factsBody: HTMLElement | null = null;
   private factsCard: HTMLElement | null = null;
-  private resilienceWidget: ResilienceWidget | null = null;
   private energyBody: HTMLElement | null = null;
   private energyCard: HTMLElement | null = null;
   private marketsCard: HTMLElement | null = null;
@@ -198,7 +194,6 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
   }
 
   public hide(): void {
-    this.destroyResilienceWidget();
     if (this.isMaximizedState) {
       this.isMaximizedState = false;
       this.panel.classList.remove('maximized');
@@ -493,7 +488,6 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
   public updateEnergyProfile(data: CountryEnergyProfileData): void {
     if (!this.energyBody) return;
     this.renderEnergyProfile(data);
-    this.resilienceWidget?.setEnergyMix(data);
   }
 
   private renderEnergyProfile(data: CountryEnergyProfileData): void {
@@ -852,27 +846,7 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
   }
 
   public updateScore(score: CountryScore | null, _signals: CountryBriefSignals): void {
-    if (!this.scoreCard) return;
-    // Partial DOM update: score number, level color, trend, component bars only
-    const top = this.scoreCard.firstElementChild as HTMLElement | null;
-    while (this.scoreCard.childElementCount > 1) {
-      this.scoreCard.lastElementChild?.remove();
-    }
-    if (top) {
-      const updatedEl = top.querySelector('.cdp-updated');
-      if (updatedEl) updatedEl.textContent = `Updated ${this.shortDate(score?.lastUpdated ?? new Date())}`;
-    }
-    if (score) {
-      const band = this.ciiBand(score.score);
-      const scoreRow = this.el('div', 'cdp-score-row');
-      const value = this.el('div', `cdp-score-value cii-${band}`, `${score.score}/100`);
-      const trend = this.el('div', 'cdp-trend', `${this.trendArrow(score.trend)} ${score.trend}`);
-      scoreRow.append(value, trend);
-      this.scoreCard.append(scoreRow);
-      this.scoreCard.append(this.renderComponentBars(score.components));
-    } else {
-      this.scoreCard.append(this.makeEmpty(t('countryBrief.ciiUnavailable')));
-    }
+    void score;
   }
 
   public updateStock(data: StockIndexData): void {
@@ -985,7 +959,7 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     this.content.append(loading);
   }
 
-  private renderSkeleton(country: string, code: string, score: CountryScore | null, signals: CountryBriefSignals): void {
+  private renderSkeleton(country: string, code: string, _score: CountryScore | null, signals: CountryBriefSignals): void {
     this.resetPanelContent();
 
     const shell = this.el('div', 'cdp-shell');
@@ -1041,35 +1015,10 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     right.append(shareBtn, maxBtn, storyButton, exportButton);
     header.append(left, right);
 
-    const scoreCard = this.el('section', 'cdp-card cdp-score-card');
-    this.scoreCard = scoreCard;
-    const top = this.el('div', 'cdp-score-top');
-    const label = this.el('span', 'cdp-score-label', t('countryBrief.instabilityIndex'));
-    const updated = this.el('span', 'cdp-updated', `Updated ${this.shortDate(score?.lastUpdated ?? new Date())}`);
-    top.append(label, updated);
-    scoreCard.append(top);
-
-    if (score) {
-      const band = this.ciiBand(score.score);
-      const scoreRow = this.el('div', 'cdp-score-row');
-      const value = this.el('div', `cdp-score-value cii-${band}`, `${score.score}/100`);
-      const trend = this.el('div', 'cdp-trend', `${this.trendArrow(score.trend)} ${score.trend}`);
-      scoreRow.append(value, trend);
-      scoreCard.append(scoreRow);
-      scoreCard.append(this.renderComponentBars(score.components));
-    } else {
-      scoreCard.append(this.makeEmpty(t('countryBrief.ciiUnavailable')));
-    }
-
-    this.resilienceWidget = new ResilienceWidget(code);
-    const summaryGrid = this.el('div', 'cdp-summary-grid');
-    summaryGrid.append(scoreCard, this.resilienceWidget.getElement());
-
     const bodyGrid = this.el('div', 'cdp-grid');
     const [signalsCard, signalBody] = this.sectionCard(t('countryBrief.activeSignals'));
     const [timelineCard, timelineBody] = this.sectionCard(t('countryBrief.timeline'));
     const [newsCard, newsBody] = this.sectionCard(t('countryBrief.topNews'));
-    const [militaryCard, militaryBody] = this.sectionCard(t('countryBrief.militaryActivity'));
     const [infraCard, infraBody] = this.sectionCard(t('countryBrief.infrastructure'));
     const [economicCard, economicBody] = this.sectionCard(t('countryBrief.economicIndicators'));
     const [marketsCard, marketsBody] = this.sectionCard(t('countryBrief.predictionMarkets'));
@@ -1091,7 +1040,7 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     this.timelineBody = timelineBody;
     this.timelineBody.classList.add('cdp-timeline-mount');
     this.newsBody = newsBody;
-    this.militaryBody = militaryBody;
+    this.militaryBody = null;
     this.infrastructureBody = infraBody;
     this.economicBody = economicBody;
     this.marketsCard = marketsCard;
@@ -1100,25 +1049,17 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
 
     this.renderInitialSignals(signals);
     newsBody.append(this.makeLoading('Loading country headlines…'));
-    militaryBody.append(this.makeLoading('Loading flights, vessels, and nearby bases…'));
     infraBody.append(this.makeLoading('Computing nearby critical infrastructure…'));
     economicBody.append(this.makeLoading('Loading available indicators…'));
     marketsBody.append(this.makeLoading(t('countryBrief.loadingMarkets')));
     briefBody.append(this.makeLoading(t('countryBrief.generatingBrief')));
 
-    bodyGrid.append(briefCard, factsExpanded, energyCard, signalsCard, timelineCard, newsCard, militaryCard, infraCard, economicCard, marketsCard);
-    shell.append(header, summaryGrid, bodyGrid);
+    bodyGrid.append(briefCard, factsExpanded, energyCard, signalsCard, timelineCard, newsCard, infraCard, economicCard, marketsCard);
+    shell.append(header, bodyGrid);
     this.content.append(shell);
   }
 
-  private destroyResilienceWidget(): void {
-    this.resilienceWidget?.destroy();
-    this.resilienceWidget = null;
-  }
-
   private resetPanelContent(): void {
-    this.destroyResilienceWidget();
-    this.scoreCard = null;
     this.factsCard = null;
     this.energyBody = null;
     this.energyCard = null;
@@ -1185,35 +1126,6 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
 
   private makeSignalChip(text: string, cls: string): HTMLElement {
     return this.el('span', `cdp-signal-chip chip-${cls}`, text);
-  }
-
-  private renderComponentBars(components: CountryScore['components']): HTMLElement {
-    const wrap = this.el('div', 'cdp-components');
-    const items = [
-      { label: t('countryBrief.components.unrest'), value: components.unrest, icon: '📢' },
-      { label: t('countryBrief.components.conflict'), value: components.conflict, icon: '⚔' },
-      { label: t('countryBrief.components.security'), value: components.security, icon: '🛡️' },
-      { label: t('countryBrief.components.information'), value: components.information, icon: '📡' },
-    ];
-    for (const item of items) {
-      const row = this.el('div', 'cdp-score-row');
-      const icon = this.el('span', 'cdp-comp-icon', item.icon);
-      const label = this.el('span', 'cdp-comp-label', item.label);
-      const barOuter = this.el('div', 'cdp-comp-bar');
-      const pct = Math.min(100, Math.max(0, item.value));
-      const color = pct >= 70 ? getCSSColor('--semantic-critical')
-        : pct >= 50 ? getCSSColor('--semantic-high')
-        : pct >= 30 ? getCSSColor('--semantic-elevated')
-        : getCSSColor('--semantic-normal');
-      const barFill = this.el('div', 'cdp-comp-fill');
-      barFill.style.width = `${pct}%`;
-      barFill.style.background = color;
-      barOuter.append(barFill);
-      const val = this.el('span', 'cdp-comp-val', String(Math.round(item.value)));
-      row.append(icon, label, barOuter, val);
-      wrap.append(row);
-    }
-    return wrap;
   }
 
   private renderSignalBreakdown(details: CountryDeepDiveSignalDetails): void {
@@ -1386,23 +1298,10 @@ export class CountryDeepDivePanel implements CountryBriefPanel {
     return sentences.slice(0, 3).join(' ') || normalized;
   }
 
-  private trendArrow(trend: CountryScore['trend']): string {
-    if (trend === 'rising') return '↑';
-    if (trend === 'falling') return '↓';
-    return '→';
-  }
-
   private trendArrowFromDirection(trend: TrendDirection): string {
     if (trend === 'up') return '↑';
     if (trend === 'down') return '↓';
     return '→';
-  }
-
-  private ciiBand(score: number): 'stable' | 'elevated' | 'high' | 'critical' {
-    if (score <= 25) return 'stable';
-    if (score <= 50) return 'elevated';
-    if (score <= 75) return 'high';
-    return 'critical';
   }
 
   private decodeEntities(text: string): string {

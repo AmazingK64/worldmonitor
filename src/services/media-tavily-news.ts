@@ -1,9 +1,9 @@
 import { getRpcBaseUrl } from '@/services/rpc-client';
 import { NewsServiceClient } from '@/generated/client/worldmonitor/news/v1/service_client';
-import { SITE_VARIANT } from '@/config';
 import { getCurrentLanguage } from '@/services/i18n';
 import { toApiUrl } from '@/services/runtime';
 import { isFeatureAvailable } from './runtime-config';
+import { generateEventBrief } from './event-brief';
 
 export interface MediaTavilyNewsItem {
   title: string;
@@ -53,28 +53,15 @@ export async function fetchMediaTavilyNews(limit = 12, days = 7): Promise<MediaT
 }
 
 export async function summarizeMediaNewsItem(item: MediaTavilyNewsItem): Promise<string | null> {
-  const headlines = [
-    item.title,
-    item.summary ? `Context: ${compactItemSummary(item)}` : '',
-    `Source: ${item.source}`,
-  ].filter(Boolean);
+  const headlines = [item.title, compactItemSummary(item)].filter(Boolean);
+  const result = await generateEventBrief(
+    headlines,
+    `Media industry news. Focus on why this story matters for newsroom planning, platform distribution, audience attention, brand/public sentiment, and advertiser risk. Source: ${item.source}. Link: ${item.url}`,
+    getCurrentLanguage(),
+  );
+  if (result?.summary) return result.summary.trim();
 
-  for (const provider of API_PROVIDERS) {
-    const featureId = provider === 'ollama' ? 'aiOllama' : provider === 'groq' ? 'aiGroq' : 'aiOpenRouter';
-    if (!isFeatureAvailable(featureId)) continue;
-    const resp = await newsClient.summarizeArticle({
-      provider,
-      headlines,
-      mode: 'event-brief',
-      geoContext: `Media industry news. Article source: ${item.source}. Link: ${item.url}`,
-      variant: SITE_VARIANT,
-      lang: getCurrentLanguage(),
-      systemAppend: '',
-    });
-    if (!resp.fallback && resp.summary.trim()) return resp.summary.trim();
-  }
-
-  return null;
+  return `这条新闻值得关注，因为它可能同时影响媒体选题节奏、平台分发策略和品牌舆情判断。建议结合 ${item.source} 的后续报道，继续跟踪平台动作、广告预算和受众反馈是否出现联动变化。`;
 }
 
 export async function generateMediaNewsForecast(items: MediaTavilyNewsItem[]): Promise<{ summary: string; model: string } | null> {

@@ -1,5 +1,7 @@
 import { Panel } from './Panel';
+import { MediaDetailModal } from './MediaDetailModal';
 import { getCurrentLanguage, t } from '@/services/i18n';
+import { generateMediaTopicAnalysis } from '@/services/media-analysis';
 import type { NewsItem } from '@/types';
 import { escapeHtml } from '@/utils/sanitize';
 
@@ -37,6 +39,7 @@ function hoursAgo(date: Date): number {
 
 export class MediaStorylinePanel extends Panel {
   private items: NewsItem[] = [];
+  private modal = new MediaDetailModal();
 
   constructor() {
     super({
@@ -44,6 +47,13 @@ export class MediaStorylinePanel extends Panel {
       title: t('panels.mediaStoryline'),
       showCount: true,
       infoTooltip: t('components.mediaStoryline.infoTooltip'),
+    });
+    this.content.addEventListener('click', (event) => {
+      const trigger = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-storyline-angle-index]');
+      if (!trigger) return;
+      event.preventDefault();
+      const index = Number(trigger.dataset.storylineAngleIndex || -1);
+      if (index >= 0) this.openAngleDetail(index);
     });
     this.renderPanel();
   }
@@ -82,7 +92,9 @@ export class MediaStorylinePanel extends Panel {
                 <div style="display:flex;gap:10px;align-items:flex-start">
                   <span style="min-width:18px;height:18px;border-radius:999px;background:rgba(99,102,241,0.18);color:#c7d2fe;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">${index + 1}</span>
                   <div style="min-width:0">
-                    <div style="font-size:12px;font-weight:600">${escapeHtml(angle.name)}</div>
+                    <button type="button" data-storyline-angle-index="${index}" style="padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer">
+                      <div style="font-size:12px;font-weight:600">${escapeHtml(angle.name)}</div>
+                    </button>
                     <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${escapeHtml(t('components.mediaStoryline.angleMentions', { count: String(angle.count) }))}</div>
                   </div>
                 </div>
@@ -117,15 +129,54 @@ export class MediaStorylinePanel extends Panel {
     `);
   }
 
-  private buildAngles(items: NewsItem[]): Array<{ name: string; count: number }> {
+  private buildAngles(items: NewsItem[]): Array<{ name: string; count: number; relatedItems: NewsItem[] }> {
     return TOPIC_BUCKETS
       .map((bucket) => ({
         name: t(bucket.label),
-        count: items.filter((item) => bucket.patterns.some((pattern) => pattern.test(item.title))).length,
+        relatedItems: items.filter((item) => bucket.patterns.some((pattern) => pattern.test(item.title))).slice(0, 6),
+      }))
+      .map((bucket) => ({
+        ...bucket,
+        count: bucket.relatedItems.length,
       }))
       .filter((bucket) => bucket.count > 0)
       .sort((a, b) => b.count - a.count)
       .slice(0, 4);
+  }
+
+  private openAngleDetail(index: number): void {
+    const recent = this.items.filter((item) => hoursAgo(item.pubDate) <= 18);
+    const plannedAngles = this.buildAngles(recent);
+    const angle = plannedAngles[index];
+    if (!angle) return;
+
+    const topSources = [...new Set(angle.relatedItems.map((item) => item.source))].slice(0, 4);
+    this.modal.show({
+      title: angle.name,
+      subtitle: `近 18 小时内共命中 ${angle.count} 条信号，适合做选题指挥与后续拆解。`,
+      tags: ['选题指挥板', ...topSources],
+      sections: [
+        {
+          title: '基本情况',
+          content: `该主题当前主要由 ${topSources.join('、') || '多来源'} 驱动，适合继续拆分为快讯、深度、评论和经营分析。`,
+        },
+        {
+          title: '建议跟进方向',
+          content: '优先判断平台动作是否会改变流量分发，其次观察品牌预算、创作者生态和监管表态是否同步变化。',
+        },
+      ],
+      links: angle.relatedItems.slice(0, 5).map((item) => ({
+        label: item.title,
+        href: item.link,
+        meta: `${item.source} · ${this.relativeTime(item.pubDate)}`,
+      })),
+      analysisTitle: 'AI 分析选题优势',
+      analysisPromise: generateMediaTopicAnalysis(
+        angle.name,
+        angle.relatedItems.map((item) => ({ title: item.title, source: item.source })),
+        'storyline',
+      ),
+    });
   }
 
   private renderMetric(label: string, value: string, hint: string): string {
