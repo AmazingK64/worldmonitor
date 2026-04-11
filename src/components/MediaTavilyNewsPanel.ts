@@ -1,7 +1,14 @@
 import { Panel } from './Panel';
 import { fetchMediaTavilyNews, summarizeMediaNewsItem, type MediaTavilyNewsItem } from '@/services/media-tavily-news';
 import { MediaDetailModal } from './MediaDetailModal';
-import { markMediaBridgeInterpreted, setMediaBridgeItems } from '@/services/media-news-bridge';
+import {
+  getMediaBridgeInterpretedKeys,
+  getMediaBridgeInterpretedMeta,
+  markMediaBridgeInterpreted,
+  setMediaBridgeItems,
+  subscribeMediaBridgeInterpretation,
+  subscribeMediaBridgeInterpretationMeta,
+} from '@/services/media-news-bridge';
 import { escapeHtml, sanitizeUrl } from '@/utils/sanitize';
 import { t } from '@/services/i18n';
 import type { NewsItem } from '@/types';
@@ -19,6 +26,10 @@ export class MediaTavilyNewsPanel extends Panel {
   private expanded = new Map<string, string>();
   private didRetry = false;
   private loadingIndexes = new Set<number>();
+  private interpretedKeys = getMediaBridgeInterpretedKeys();
+  private interpretedMeta = getMediaBridgeInterpretedMeta();
+  private unsubscribeInterpretation: (() => void) | null = null;
+  private unsubscribeInterpretationMeta: (() => void) | null = null;
   private modal = new MediaDetailModal();
 
   constructor() {
@@ -45,6 +56,14 @@ export class MediaTavilyNewsPanel extends Panel {
       const index = Number(aiBtn.dataset.aiNewsIndex || -1);
       if (index < 0) return;
       void this.handleAiClick(index, aiBtn);
+    });
+    this.unsubscribeInterpretation = subscribeMediaBridgeInterpretation((keys) => {
+      this.interpretedKeys = keys;
+      this.renderPanel();
+    });
+    this.unsubscribeInterpretationMeta = subscribeMediaBridgeInterpretationMeta((meta) => {
+      this.interpretedMeta = meta;
+      this.renderPanel();
     });
     this.renderLoading();
     void this.load();
@@ -77,6 +96,7 @@ export class MediaTavilyNewsPanel extends Panel {
   private renderPanel(): void {
     this.setContent(`
       <div style="display:grid;gap:10px">
+        ${this.renderPulseStyles()}
         ${this.items.length > 0 ? this.items.map((item, index) => this.renderItem(item, index)).join('') : `
           <div style="display:grid;gap:8px">
             <div style="font-size:12px;color:var(--text-dim)">当前未获取到 Tavily 媒体新闻。</div>
@@ -124,15 +144,23 @@ export class MediaTavilyNewsPanel extends Panel {
 
   private renderItem(item: MediaTavilyNewsItem, index: number): string {
     const safeUrl = sanitizeUrl(item.url);
+    const interpreted = this.isInterpreted(item);
+    const fresh = this.isFreshInterpreted(item);
+    const buttonLabel = this.loadingIndexes.has(index) ? '…' : interpreted ? '已同步' : 'AI 解读';
+    const buttonStyle = this.loadingIndexes.has(index)
+      ? 'border:1px solid rgba(148,163,184,0.28);background:rgba(148,163,184,0.12);color:#cbd5e1;cursor:wait;'
+      : interpreted
+        ? `border:1px solid rgba(16,185,129,0.4);background:linear-gradient(135deg, rgba(16,185,129,0.18), rgba(56,189,248,0.14));color:#d1fae5;${fresh ? 'animation:media-ai-sync-pulse 1.4s ease-in-out 3;' : ''}`
+        : 'border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:var(--text);';
     return `
-      <article style="padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,0.03)">
+      <article style="padding:10px 12px;border:1px solid ${interpreted ? 'rgba(16,185,129,0.2)' : 'var(--border)'};border-radius:12px;background:${interpreted ? 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(56,189,248,0.06))' : 'rgba(255,255,255,0.03)'};box-shadow:${interpreted ? '0 10px 24px rgba(16,185,129,0.06)' : 'none'};${fresh ? 'animation:media-ai-card-pulse 1.5s ease-in-out 3;' : ''}">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
           <a href="${safeUrl}" target="_blank" rel="noopener" style="font-size:12px;font-weight:600;line-height:1.45;text-decoration:none;color:var(--text)">
             ${escapeHtml(item.title)}
           </a>
-          <button type="button" data-ai-news-index="${index}" class="panel-summarize-btn" title="AI 解读">✨</button>
+          <button type="button" data-ai-news-index="${index}" title="${interpreted ? '查看已同步的 AI 解读' : 'AI 解读'}" style="flex-shrink:0;padding:6px 10px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.02em;${buttonStyle}">${escapeHtml(buttonLabel)}</button>
         </div>
-        <div style="margin-top:4px;font-size:10px;color:var(--text-dim)">${escapeHtml(item.source)} · ${escapeHtml(relativeTime(item.publishedAt))}</div>
+        <div style="margin-top:4px;font-size:10px;color:var(--text-dim)">${escapeHtml(item.source)} · ${escapeHtml(relativeTime(item.publishedAt))}${interpreted ? '<span style="margin-left:8px;color:#86efac;font-weight:700">已同步到选题 / 雷达</span>' : ''}</div>
         ${item.summary ? `<div style="margin-top:8px;font-size:11px;color:var(--text-dim);line-height:1.5">${escapeHtml(item.summary.slice(0, 180))}</div>` : ''}
       </article>
     `;
@@ -235,5 +263,37 @@ export class MediaTavilyNewsPanel extends Panel {
         phase: 'developing',
       },
     };
+  }
+
+  public override destroy(): void {
+    this.unsubscribeInterpretation?.();
+    this.unsubscribeInterpretation = null;
+    this.unsubscribeInterpretationMeta?.();
+    this.unsubscribeInterpretationMeta = null;
+    super.destroy();
+  }
+
+  private isInterpreted(item: MediaTavilyNewsItem): boolean {
+    return this.interpretedKeys.has(`${item.source}::${item.title}`);
+  }
+
+  private isFreshInterpreted(item: MediaTavilyNewsItem): boolean {
+    const ts = this.interpretedMeta.get(`${item.source}::${item.title}`);
+    return typeof ts === 'number' && Date.now() - ts <= 10 * 60 * 1000;
+  }
+
+  private renderPulseStyles(): string {
+    return `
+      <style>
+        @keyframes media-ai-sync-pulse {
+          0%, 100% { transform: scale(1); filter: brightness(1); }
+          50% { transform: scale(1.04); filter: brightness(1.08); }
+        }
+        @keyframes media-ai-card-pulse {
+          0%, 100% { transform: translateZ(0); box-shadow: 0 10px 24px rgba(16,185,129,0.06); }
+          50% { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(16,185,129,0.14); }
+        }
+      </style>
+    `;
   }
 }
