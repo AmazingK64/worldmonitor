@@ -2265,7 +2265,7 @@ ${isFeatureAvailable('wingbitsEnrichment') ? '<div class="wingbits-live-section"
     return `
       <div class="popup-header startup-hub ${hub.tier}">
         <span class="popup-title">${tierIcons[hub.tier] || '🚀'} ${escapeHtml(hub.name)}</span>
-        <span class="popup-badge ${hub.tier}">${SITE_VARIANT === 'media' ? '传播中心' : (tierLabels[hub.tier] || t('popups.startupHub.tiers.hub'))}</span>
+        <span class="popup-badge ${hub.tier}">${SITE_VARIANT === 'media' ? '发布中心' : (tierLabels[hub.tier] || t('popups.startupHub.tiers.hub'))}</span>
         <button class="popup-close" aria-label="Close">×</button>
       </div>
       <div class="popup-body">
@@ -2311,12 +2311,16 @@ ${isFeatureAvailable('wingbitsEnrichment') ? '<div class="wingbits-live-section"
   }
 
   private renderTechHQPopup(hq: TechHQ): string {
-    const typeLabels: Record<string, string> = {
-      'faang': t('popups.techHQ.types.faang'),
-      'unicorn': t('popups.techHQ.types.unicorn'),
-      'public': t('popups.techHQ.types.public'),
-    };
-    const typeIcons: Record<string, string> = { 'faang': '🏛️', 'unicorn': '🦄', 'public': '🏢' };
+    const typeLabels: Record<string, string> = SITE_VARIANT === 'media'
+      ? { 'faang': '央媒总部', 'unicorn': '平台媒体', 'public': '重点媒体' }
+      : {
+        'faang': t('popups.techHQ.types.faang'),
+        'unicorn': t('popups.techHQ.types.unicorn'),
+        'public': t('popups.techHQ.types.public'),
+      };
+    const typeIcons: Record<string, string> = SITE_VARIANT === 'media'
+      ? { 'faang': '🏛️', 'unicorn': '📡', 'public': '📰' }
+      : { 'faang': '🏛️', 'unicorn': '🦄', 'public': '🏢' };
     return `
       <div class="popup-header tech-hq ${hq.type}">
         <span class="popup-title">${typeIcons[hq.type] || '🏢'} ${escapeHtml(hq.company)}</span>
@@ -2328,7 +2332,7 @@ ${isFeatureAvailable('wingbitsEnrichment') ? '<div class="wingbits-live-section"
         <div class="popup-stats">
           ${hq.marketCap ? `
           <div class="popup-stat">
-            <span class="stat-label">${t('popups.techHQ.marketCap')}</span>
+            <span class="stat-label">${SITE_VARIANT === 'media' ? '机构类型' : t('popups.techHQ.marketCap')}</span>
             <span class="stat-value">${escapeHtml(hq.marketCap)}</span>
           </div>
           ` : ''}
@@ -2344,12 +2348,16 @@ ${isFeatureAvailable('wingbitsEnrichment') ? '<div class="wingbits-live-section"
   }
 
   private renderAcceleratorPopup(acc: Accelerator): string {
-    const typeLabels: Record<string, string> = {
-      'accelerator': t('popups.accelerator.types.accelerator'),
-      'incubator': t('popups.accelerator.types.incubator'),
-      'studio': t('popups.accelerator.types.studio'),
-    };
-    const typeIcons: Record<string, string> = { 'accelerator': '🎯', 'incubator': '🔬', 'studio': '🎨' };
+    const typeLabels: Record<string, string> = SITE_VARIANT === 'media'
+      ? { 'accelerator': '发布基地', 'incubator': '融媒基地', 'studio': '内容工场' }
+      : {
+        'accelerator': t('popups.accelerator.types.accelerator'),
+        'incubator': t('popups.accelerator.types.incubator'),
+        'studio': t('popups.accelerator.types.studio'),
+      };
+    const typeIcons: Record<string, string> = SITE_VARIANT === 'media'
+      ? { 'accelerator': '📍', 'incubator': '🎬', 'studio': '🎥' }
+      : { 'accelerator': '🎯', 'incubator': '🔬', 'studio': '🎨' };
     return `
       <div class="popup-header accelerator ${acc.type}">
         <span class="popup-title">${typeIcons[acc.type] || '🎯'} ${escapeHtml(acc.name)}</span>

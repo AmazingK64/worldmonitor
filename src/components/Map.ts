@@ -41,6 +41,8 @@ import {
   MEDIA_HOTSPOTS,
   MEDIA_DEMANDS,
   MEDIA_DISSEMINATION_CENTERS,
+  MEDIA_HEADQUARTERS,
+  MEDIA_PRODUCTION_BASES,
   MEDIA_AI_DATA_CENTERS,
   MEDIA_GOVERNMENT_NOTICES,
   // Finance variant data
@@ -411,11 +413,12 @@ export class MapComponent {
     ];
     const mediaLayers: (keyof MapLayers)[] = [
       'hotspots',                                          // 媒体热点
-      'outages',                                           // 互联网中断
       'economic',                                          // 媒体需求
+      'startupHubs',                                       // 新闻发布中心
+      'techHQs',                                           // 媒体集团总部
+      'accelerators',                                      // 内容制作基地
       'techEvents',                                        // 媒体活动
       'datacenters',                                       // 数据中心
-      'startupHubs',                                       // 新闻传播中心
       'gulfInvestments',                                   // 政府新闻通告
       'cables',                                            // 海底电缆
     ];
@@ -439,8 +442,8 @@ export class MapComponent {
       waterways: 'components.deckgl.layers.strategicWaterways',
       startupHubs: SITE_VARIANT === 'media' ? 'components.deckgl.layers.newsDisseminationCenters' : 'components.deckgl.layers.startupHubs',
       cloudRegions: 'components.deckgl.layers.cloudRegions',
-      accelerators: 'components.deckgl.layers.accelerators',
-      techHQs: 'components.deckgl.layers.techHQs',
+      accelerators: SITE_VARIANT === 'media' ? 'components.deckgl.layers.mediaProductionBases' : 'components.deckgl.layers.accelerators',
+      techHQs: SITE_VARIANT === 'media' ? 'components.deckgl.layers.mediaHeadquarters' : 'components.deckgl.layers.techHQs',
       techEvents: SITE_VARIANT === 'media' ? 'components.deckgl.layers.mediaEvents' : 'components.deckgl.layers.techEvents',
       stockExchanges: 'components.deckgl.layers.stockExchanges',
       financialCenters: 'components.deckgl.layers.financialCenters',
@@ -675,8 +678,9 @@ export class MapComponent {
     if (SITE_VARIANT === 'tech' || SITE_VARIANT === 'media') {
       // Tech/media variant legend
       legend.innerHTML = `
-        <div class="map-legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>${escapeHtml(t('components.deckgl.layers.techHQs').toUpperCase())}</div>
+        <div class="map-legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>${escapeHtml(t(SITE_VARIANT === 'media' ? 'components.deckgl.layers.mediaHeadquarters' : 'components.deckgl.layers.techHQs').toUpperCase())}</div>
         <div class="map-legend-item"><span class="legend-dot" style="background:#06b6d4"></span>${escapeHtml(t(SITE_VARIANT === 'media' ? 'components.deckgl.layers.newsDisseminationCenters' : 'components.deckgl.layers.startupHubs').toUpperCase())}</div>
+        ${SITE_VARIANT === 'media' ? `<div class="map-legend-item"><span class="legend-dot" style="background:#d97706"></span>${escapeHtml(t('components.deckgl.layers.mediaProductionBases').toUpperCase())}</div>` : `<div class="map-legend-item"><span class="legend-dot" style="background:#d97706"></span>${escapeHtml(t('components.deckgl.layers.accelerators').toUpperCase())}</div>`}
         <div class="map-legend-item"><span class="legend-dot" style="background:#f59e0b"></span>${escapeHtml(t('components.deckgl.layers.cloudRegions').toUpperCase())}</div>
         <div class="map-legend-item"><span class="map-legend-icon" style="color:#a855f7">📅</span>${escapeHtml(t(SITE_VARIANT === 'media' ? 'components.deckgl.layers.mediaEvents' : 'components.deckgl.layers.techEvents').toUpperCase())}</div>
         <div class="map-legend-item"><span class="map-legend-icon" style="color:#4ecdc4">💾</span>${escapeHtml(t(SITE_VARIANT === 'media' ? 'components.deckgl.layers.aiMediaDataCenters' : 'components.deckgl.layers.aiDataCenters').toUpperCase())}</div>
@@ -2089,10 +2093,11 @@ export class MapComponent {
 
     // Tech HQs (🏢 icons by company type) - with clustering by city
     if (this.state.layers.techHQs) {
+      const techHqs = SITE_VARIANT === 'media' ? MEDIA_HEADQUARTERS : TECH_HQS;
       // Cluster radius depends on zoom - tighter clustering when zoomed out
       const clusterRadius = this.state.zoom >= 4 ? 15 : this.state.zoom >= 3 ? 25 : 40;
       // Group by city to prevent clustering companies from different cities
-      const clusters = this.clusterMarkers(TECH_HQS, projection, clusterRadius, hq => hq.city);
+      const clusters = this.clusterMarkers(techHqs, projection, clusterRadius, hq => hq.city);
 
       clusters.forEach((cluster) => {
         if (cluster.items.length === 0) return;
@@ -2159,7 +2164,8 @@ export class MapComponent {
 
     // Accelerators (🎯 icons)
     if (this.state.layers.accelerators) {
-      ACCELERATORS.forEach((acc) => {
+      const accelerators = SITE_VARIANT === 'media' ? MEDIA_PRODUCTION_BASES : ACCELERATORS;
+      accelerators.forEach((acc) => {
         const pos = projection([acc.lon, acc.lat]);
         if (!pos) return;
 

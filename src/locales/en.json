@@ -1265,7 +1265,9 @@
       },
       "layers": {
         "startupHubs": "Startup Hubs",
-        "newsDisseminationCenters": "News Dissemination Centers",
+        "newsDisseminationCenters": "News Release Centers",
+        "mediaHeadquarters": "Media Headquarters",
+        "mediaProductionBases": "Content Production Bases",
         "techHQs": "Tech HQs",
         "accelerators": "Accelerators",
         "cloudRegions": "Cloud Regions",

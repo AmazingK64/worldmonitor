@@ -97,6 +97,8 @@ import {
   MEDIA_DEMANDS,
   MEDIA_EVENTS,
   MEDIA_DISSEMINATION_CENTERS,
+  MEDIA_HEADQUARTERS,
+  MEDIA_PRODUCTION_BASES,
   MEDIA_AI_DATA_CENTERS,
   MEDIA_GOVERNMENT_NOTICES,
 } from '@/config';
@@ -1075,7 +1077,8 @@ export class DeckGLMap {
   }
 
   private rebuildTechHQSupercluster(): void {
-    const points = TECH_HQS.map((h, i) => ({
+    const techHqs = SITE_VARIANT === 'media' ? MEDIA_HEADQUARTERS : TECH_HQS;
+    const points = techHqs.map((h, i) => ({
       type: 'Feature' as const,
       geometry: { type: 'Point' as const, coordinates: [h.lon, h.lat] as [number, number] },
       properties: {
@@ -1284,7 +1287,8 @@ export class DeckGLMap {
             sampled: clusterCount > DeckGLMap.MAX_CLUSTER_LEAVES,
           };
         }
-        const item = TECH_HQS[f.properties.index]!;
+        const techHqs = SITE_VARIANT === 'media' ? MEDIA_HEADQUARTERS : TECH_HQS;
+        const item = techHqs[f.properties.index]!;
         return {
           id: `hp-${f.properties.index}`, lat: item.lat, lon: item.lon,
           count: 1, items: [item], city: item.city, country: item.country,
@@ -2861,7 +2865,7 @@ export class DeckGLMap {
   private createAcceleratorsLayer(): ScatterplotLayer {
     return new ScatterplotLayer({
       id: 'accelerators-layer',
-      data: ACCELERATORS,
+      data: SITE_VARIANT === 'media' ? MEDIA_PRODUCTION_BASES : ACCELERATORS,
       getPosition: (d) => [d.lon, d.lat],
       getRadius: 6000,
       getFillColor: COLORS.accelerator,
@@ -3984,7 +3988,8 @@ export class DeckGLMap {
       if (cluster.items.length === 0 && cluster._clusterId != null && this.techHQSC) {
         try {
           const leaves = this.techHQSC.getLeaves(cluster._clusterId, DeckGLMap.MAX_CLUSTER_LEAVES);
-          cluster.items = leaves.map(l => TECH_HQS[l.properties.index]).filter(Boolean) as typeof TECH_HQS;
+          const techHqs = SITE_VARIANT === 'media' ? MEDIA_HEADQUARTERS : TECH_HQS;
+          cluster.items = leaves.map(l => techHqs[l.properties.index]).filter(Boolean) as typeof techHqs;
           cluster.sampled = cluster.items.length < cluster.count;
         } catch (e) {
           console.warn('[DeckGLMap] stale techHQ cluster', cluster._clusterId, e);

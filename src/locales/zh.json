@@ -1029,7 +1029,9 @@
       },
       "layers": {
         "startupHubs": "创业中心",
-        "newsDisseminationCenters": "新闻传播中心",
+        "newsDisseminationCenters": "新闻发布中心",
+        "mediaHeadquarters": "媒体集团总部",
+        "mediaProductionBases": "内容制作基地",
         "techHQs": "科技总部",
         "accelerators": "加速器",
         "cloudRegions": "云计算区域",

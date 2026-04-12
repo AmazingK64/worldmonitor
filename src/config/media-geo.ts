@@ -5,8 +5,8 @@
  * when the active variant is `media`, so the map reflects actual media-industry
  * content rather than the original geopolitical/financial/tech data.
  */
-import type { AIDataCenter, EconomicCenter, GulfInvestment, Hotspot, MapTechEventCluster } from '@/types';
-import type { StartupHub } from './tech-geo';
+import type { AIDataCenter, EconomicCenter, GulfInvestment, Hotspot, MapTechEventCluster, TechHQ } from '@/types';
+import type { Accelerator, StartupHub } from './tech-geo';
 
 // ---------------------------------------------------------------------------
 // 1. Media Hotspots – key media-industry regions & editorial flashpoints
@@ -246,18 +246,35 @@ export const MEDIA_DEMANDS: EconomicCenter[] = [
   { id: 'md_xiaohongshu', name: '小红书', type: 'financial-hub', lat: 31.2, lon: 121.5, country: 'China', description: '种草+内容电商平台，品牌营销必争之地' },
   { id: 'md_weibo', name: '微博', type: 'exchange', lat: 39.9, lon: 116.4, country: 'China', description: '公共舆论场与娱乐营销核心平台' },
   { id: 'md_kuaishou', name: '快手', type: 'financial-hub', lat: 39.9, lon: 116.4, country: 'China', description: '下沉市场短视频+直播电商龙头' },
+  { id: 'md_toutiao', name: '今日头条', type: 'exchange', lat: 39.91, lon: 116.41, country: 'China', description: '算法资讯分发平台，影响大众新闻消费入口' },
+  { id: 'md_tencent_news', name: '腾讯新闻', type: 'financial-hub', lat: 22.54, lon: 114.06, country: 'China', description: '依托微信与腾讯生态的综合新闻与热点分发平台' },
+  { id: 'md_ifeng', name: '凤凰网', type: 'exchange', lat: 39.98, lon: 116.31, country: 'China', description: '政经与评论内容影响力较强的综合门户媒体' },
+  { id: 'md_netease_news', name: '网易新闻', type: 'financial-hub', lat: 39.98, lon: 116.32, country: 'China', description: '资讯客户端与社区互动联动的内容消费平台' },
+  { id: 'md_sohu_news', name: '搜狐新闻', type: 'exchange', lat: 39.99, lon: 116.30, country: 'China', description: '门户资讯与自媒体分发并行的平台型媒体' },
+  { id: 'md_zhihu', name: '知乎', type: 'financial-hub', lat: 39.97, lon: 116.31, country: 'China', description: '知识社区与议题讨论平台，适合观察深度内容需求' },
+  { id: 'md_iqiyi', name: '爱奇艺', type: 'financial-hub', lat: 39.98, lon: 116.31, country: 'China', description: '长视频平台，牵动综艺、剧集与广告内容需求' },
+  { id: 'md_tencent_video', name: '腾讯视频', type: 'financial-hub', lat: 22.54, lon: 114.05, country: 'China', description: '头部长视频平台，连接影视发行与会员商业化' },
+  { id: 'md_youku', name: '优酷', type: 'exchange', lat: 30.28, lon: 120.16, country: 'China', description: '阿里体系视频平台，覆盖内容发行与品牌合作' },
+  { id: 'md_mangotv', name: '芒果TV', type: 'financial-hub', lat: 28.23, lon: 112.94, country: 'China', description: '综艺与女性向内容消费强势平台，带动节目热度传播' },
+  { id: 'md_xinhua_app', name: '新华社客户端', type: 'exchange', lat: 39.91, lon: 116.39, country: 'China', description: '权威新闻移动分发平台，重大政经信息触达速度快' },
+  { id: 'md_people_app', name: '人民日报客户端', type: 'exchange', lat: 39.91, lon: 116.37, country: 'China', description: '中央党媒客户端，政策与时政内容的核心传播入口' },
   // ── Japan ──
   { id: 'md_line_jp', name: 'LINE', type: 'financial-hub', lat: 35.7, lon: 139.7, country: 'Japan', description: '日本最大社交+内容分发平台' },
   { id: 'md_yahoo_jp', name: 'Yahoo! Japan', type: 'exchange', lat: 35.7, lon: 139.7, country: 'Japan', description: '日本门户+新闻+搜索核心入口' },
+  { id: 'md_abema', name: 'ABEMA', type: 'financial-hub', lat: 35.68, lon: 139.76, country: 'Japan', description: '日本在线视频与直播新闻消费平台' },
   // ── South Korea ──
   { id: 'md_naver', name: 'Naver', type: 'exchange', lat: 37.6, lon: 127.0, country: 'South Korea', description: '韩国最大搜索+内容平台，Webtoon IP源头' },
   { id: 'md_kakao', name: 'Kakao', type: 'financial-hub', lat: 37.6, lon: 127.0, country: 'South Korea', description: '韩国社交+内容+娱乐生态，Kakao Page网文IP' },
+  { id: 'md_wavve', name: 'Wavve', type: 'financial-hub', lat: 37.57, lon: 126.98, country: 'South Korea', description: '韩国本土长视频平台，承接影视综艺内容消费' },
   // ── India ──
   { id: 'md_jiocinema', name: 'JioCinema', type: 'financial-hub', lat: 19.1, lon: 72.9, country: 'India', description: '印度免费流媒体，Reliance旗下，用户超4亿' },
   { id: 'md_hotstar', name: 'Disney+ Hotstar', type: 'exchange', lat: 19.1, lon: 72.9, country: 'India', description: '印度最大付费流媒体，板球版权驱动' },
+  { id: 'md_dailyhunt', name: 'Dailyhunt', type: 'financial-hub', lat: 12.97, lon: 77.59, country: 'India', description: '印度多语种新闻聚合平台，区域语言内容需求强劲' },
   // ── Southeast Asia ──
   { id: 'md_grab', name: 'Grab Media', type: 'financial-hub', lat: 1.3, lon: 103.8, country: 'Singapore', description: '超级App内嵌内容与广告分发' },
   { id: 'md_tokopedia_play', name: 'Tokopedia Play', type: 'financial-hub', lat: -6.2, lon: 106.8, country: 'Indonesia', description: '印尼电商+短视频融合平台' },
+  { id: 'md_cna', name: 'CNA Digital', type: 'exchange', lat: 1.29, lon: 103.85, country: 'Singapore', description: '新加坡与亚太地区英语新闻内容的重要数字发布平台' },
+  { id: 'md_detik', name: 'Detik', type: 'exchange', lat: -6.21, lon: 106.82, country: 'Indonesia', description: '印尼高频新闻消费入口，实时资讯传播能力强' },
   // ── Global ──
   { id: 'md_youtube', name: 'YouTube', type: 'exchange', lat: 37.4, lon: -122.1, country: 'USA', description: '全球最大视频内容平台，创作者经济核心' },
   { id: 'md_tiktok', name: 'TikTok', type: 'exchange', lat: 22.3, lon: 114.2, country: 'Global', description: '全球短视频霸主，内容出海与广告投放新范式' },
@@ -429,8 +446,22 @@ export const MEDIA_EVENTS: MapTechEventCluster[] = [
 // 4. Media Dissemination Centers – replaces startup hubs in media variant.
 // ---------------------------------------------------------------------------
 export const MEDIA_DISSEMINATION_CENTERS: StartupHub[] = [
-  { id: 'mdc_beijing', name: '央媒传播中枢', city: 'Beijing', country: 'China', lat: 39.9042, lon: 116.4074, tier: 'mega', unicorns: 18, description: '央视、新华社、人民网及政务传播体系高度集中的全国级新闻传播中心。' },
-  { id: 'mdc_shanghai', name: '商业内容分发中心', city: 'Shanghai', country: 'China', lat: 31.2304, lon: 121.4737, tier: 'mega', unicorns: 16, description: '品牌广告、视频平台、内容电商和都市媒体协同最活跃的传播中枢。' },
+  { id: 'mdc_xinhua', name: '新华社总社', city: 'Beijing', country: 'China', lat: 39.9087, lon: 116.3883, tier: 'mega', unicorns: 20, description: '国家级通讯社核心发布机构，承担国内外重大新闻采写、发布与多语种传播。' },
+  { id: 'mdc_peoples_daily', name: '人民日报社', city: 'Beijing', country: 'China', lat: 39.9099, lon: 116.3737, tier: 'mega', unicorns: 18, description: '中央重点新闻单位，承担权威政经报道、评论发布与全媒体传播。' },
+  { id: 'mdc_cmg', name: '中央广播电视总台', city: 'Beijing', country: 'China', lat: 39.9156, lon: 116.3469, tier: 'mega', unicorns: 18, description: '国家级广播电视与视频新闻发布中心，覆盖电视、广播、新媒体与国际传播。' },
+  { id: 'mdc_chinanews', name: '中国新闻网', city: 'Beijing', country: 'China', lat: 39.9231, lon: 116.4326, tier: 'major', unicorns: 14, description: '面向海内外华语受众的重要新闻发布机构，兼具快讯与深度报道能力。' },
+  { id: 'mdc_beijing', name: '央媒发布中枢', city: 'Beijing', country: 'China', lat: 39.9042, lon: 116.4074, tier: 'mega', unicorns: 18, description: '新华社、人民日报、总台及政务发布体系高度集中的全国级新闻发布中心。' },
+  { id: 'mdc_shanghai', name: '上海媒体发布中心', city: 'Shanghai', country: 'China', lat: 31.2304, lon: 121.4737, tier: 'mega', unicorns: 16, description: '澎湃新闻、界面新闻、SMG 等机构密集分布，兼具都市新闻、财经与视频内容发布能力。' },
+  { id: 'mdc_thepaper', name: '澎湃新闻', city: 'Shanghai', country: 'China', lat: 31.2231, lon: 121.4459, tier: 'major', unicorns: 12, description: '以上海为中心的全国性时政与深度报道发布平台，移动端影响力强。' },
+  { id: 'mdc_yicai', name: '第一财经', city: 'Shanghai', country: 'China', lat: 31.2166, lon: 121.5447, tier: 'major', unicorns: 11, description: '聚焦财经新闻、直播与商业内容发布，是国内重要财经媒体节点。' },
+  { id: 'mdc_szpress', name: '深圳报业集团', city: 'Shenzhen', country: 'China', lat: 22.5431, lon: 114.0579, tier: 'major', unicorns: 10, description: '南方城市新闻发布与湾区产业报道的重要本地媒体中枢。' },
+  { id: 'mdc_gmw', name: '光明日报社', city: 'Beijing', country: 'China', lat: 39.9148, lon: 116.3828, tier: 'major', unicorns: 9, description: '文化、教育与评论内容的重要中央媒体发布机构。' },
+  { id: 'mdc_economic_daily', name: '经济日报社', city: 'Beijing', country: 'China', lat: 39.9077, lon: 116.4177, tier: 'major', unicorns: 9, description: '宏观经济、产业政策与财经评论的重要权威发布平台。' },
+  { id: 'mdc_chinadaily', name: '中国日报社', city: 'Beijing', country: 'China', lat: 39.9212, lon: 116.4435, tier: 'major', unicorns: 9, description: '国际传播导向明显的英文新闻发布机构。' },
+  { id: 'mdc_caixin', name: '财新传媒', city: 'Beijing', country: 'China', lat: 39.9832, lon: 116.3157, tier: 'major', unicorns: 12, description: '调查报道与财经深度内容的头部市场化媒体机构。' },
+  { id: 'mdc_jiemian', name: '界面新闻', city: 'Shanghai', country: 'China', lat: 31.2262, lon: 121.4730, tier: 'major', unicorns: 11, description: '商业与财经资讯的数字原生媒体平台。' },
+  { id: 'mdc_southcn', name: '南方报业传媒集团', city: 'Guangzhou', country: 'China', lat: 23.1299, lon: 113.2648, tier: 'major', unicorns: 10, description: '华南地区政经与社会新闻的重要发布机构。' },
+  { id: 'mdc_gdtv', name: '广东广播电视台', city: 'Guangzhou', country: 'China', lat: 23.1321, lon: 113.2806, tier: 'emerging', unicorns: 8, description: '粤港澳大湾区广播电视与新媒体内容发布中心。' },
   { id: 'mdc_hongkong', name: '国际华语新闻中心', city: 'Hong Kong', country: 'China', lat: 22.3193, lon: 114.1694, tier: 'major', unicorns: 9, description: '国际媒体、财经新闻与华语受众传播链路的关键节点。' },
   { id: 'mdc_singapore', name: '亚太新闻分发中心', city: 'Singapore', country: 'Singapore', lat: 1.3521, lon: 103.8198, tier: 'major', unicorns: 7, description: '通讯社区域总部、跨境媒体运营和多语种新闻分发的枢纽。' },
   { id: 'mdc_london', name: '欧洲公共传播中心', city: 'London', country: 'UK', lat: 51.5074, lon: -0.1278, tier: 'major', unicorns: 8, description: 'BBC、路透及国际公共传播机构密集分布的欧洲中心。' },
@@ -439,7 +470,41 @@ export const MEDIA_DISSEMINATION_CENTERS: StartupHub[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 5. AI Media Data Centers – replaces generic AI data centers in media variant.
+// 5. Media Headquarters – replaces tech HQ layer in media variant.
+// ---------------------------------------------------------------------------
+export const MEDIA_HEADQUARTERS: TechHQ[] = [
+  { id: 'mhq_xinhua', company: '新华社', city: 'Beijing', country: 'China', lat: 39.9087, lon: 116.3883, type: 'faang', employees: 10000, marketCap: '国家级通讯社' },
+  { id: 'mhq_people', company: '人民日报社', city: 'Beijing', country: 'China', lat: 39.9099, lon: 116.3737, type: 'faang', employees: 8000, marketCap: '中央重点媒体' },
+  { id: 'mhq_cmg', company: '中央广播电视总台', city: 'Beijing', country: 'China', lat: 39.9156, lon: 116.3469, type: 'faang', employees: 12000, marketCap: '国家级广电机构' },
+  { id: 'mhq_chinadaily', company: '中国日报社', city: 'Beijing', country: 'China', lat: 39.9212, lon: 116.4435, type: 'public', employees: 3000, marketCap: '国际传播媒体' },
+  { id: 'mhq_caixin', company: '财新传媒', city: 'Beijing', country: 'China', lat: 39.9832, lon: 116.3157, type: 'public', employees: 2000, marketCap: '财经深度媒体' },
+  { id: 'mhq_smg', company: 'SMG', city: 'Shanghai', country: 'China', lat: 31.2317, lon: 121.4680, type: 'faang', employees: 9000, marketCap: '省级广电集团' },
+  { id: 'mhq_thepaper', company: '澎湃新闻', city: 'Shanghai', country: 'China', lat: 31.2231, lon: 121.4459, type: 'unicorn', employees: 1600, marketCap: '数字原生新闻平台' },
+  { id: 'mhq_yicai', company: '第一财经', city: 'Shanghai', country: 'China', lat: 31.2166, lon: 121.5447, type: 'public', employees: 1800, marketCap: '财经全媒体集团' },
+  { id: 'mhq_jiemian', company: '界面新闻', city: 'Shanghai', country: 'China', lat: 31.2262, lon: 121.4730, type: 'unicorn', employees: 1200, marketCap: '商业资讯平台' },
+  { id: 'mhq_nanfang', company: '南方报业传媒集团', city: 'Guangzhou', country: 'China', lat: 23.1299, lon: 113.2648, type: 'public', employees: 4000, marketCap: '区域重点媒体集团' },
+  { id: 'mhq_szpress', company: '深圳报业集团', city: 'Shenzhen', country: 'China', lat: 22.5431, lon: 114.0579, type: 'public', employees: 2600, marketCap: '湾区城市媒体集团' },
+  { id: 'mhq_ifeng', company: '凤凰网', city: 'Beijing', country: 'China', lat: 39.9780, lon: 116.3120, type: 'unicorn', employees: 2200, marketCap: '综合门户媒体' },
+];
+
+// ---------------------------------------------------------------------------
+// 6. Media Production Bases – replaces accelerators layer in media variant.
+// ---------------------------------------------------------------------------
+export const MEDIA_PRODUCTION_BASES: Accelerator[] = [
+  { id: 'mpb_cctv_video', name: '央视新闻演播制作基地', city: 'Beijing', country: 'China', lat: 39.9150, lon: 116.3475, type: 'studio', founded: 2018, notable: ['时政直播', '国际报道', '融媒短视频'] },
+  { id: 'mpb_xinhua_media', name: '新华社全媒体采编中心', city: 'Beijing', country: 'China', lat: 39.9092, lon: 116.3890, type: 'accelerator', founded: 2017, notable: ['多语种发布', '快讯分发', '图片视频'] },
+  { id: 'mpb_people_video', name: '人民网视频内容基地', city: 'Beijing', country: 'China', lat: 39.9103, lon: 116.3741, type: 'studio', founded: 2019, notable: ['时政视频', '评论节目', '短视频栏目'] },
+  { id: 'mpb_thepaper_lab', name: '澎湃视频与调查工场', city: 'Shanghai', country: 'China', lat: 31.2238, lon: 121.4468, type: 'studio', founded: 2016, notable: ['深度报道', '纪实短片', '热点拆解'] },
+  { id: 'mpb_smg_fusion', name: 'SMG融媒体制作基地', city: 'Shanghai', country: 'China', lat: 31.2310, lon: 121.4686, type: 'incubator', founded: 2018, notable: ['电视新媒体联动', '晚会直播', '城市新闻'] },
+  { id: 'mpb_yicai_live', name: '第一财经直播工场', city: 'Shanghai', country: 'China', lat: 31.2171, lon: 121.5455, type: 'accelerator', founded: 2020, notable: ['财经直播', '市场解读', '品牌访谈'] },
+  { id: 'mpb_sz_video', name: '深圳湾区视频新闻基地', city: 'Shenzhen', country: 'China', lat: 22.5425, lon: 114.0586, type: 'incubator', founded: 2021, notable: ['产业短视频', '湾区直播', '城市观察'] },
+  { id: 'mpb_gd_broadcast', name: '粤港澳大湾区融媒制作中心', city: 'Guangzhou', country: 'China', lat: 23.1315, lon: 113.2810, type: 'incubator', founded: 2020, notable: ['区域传播', '文娱节目', '重大活动'] },
+  { id: 'mpb_hk_international', name: '香港国际视频采编基地', city: 'Hong Kong', country: 'China', lat: 22.3185, lon: 114.1702, type: 'accelerator', founded: 2019, notable: ['国际财经', '英语报道', '跨境传播'] },
+  { id: 'mpb_singapore_cna', name: 'CNA多语种新闻工场', city: 'Singapore', country: 'Singapore', lat: 1.2905, lon: 103.8510, type: 'studio', founded: 2018, notable: ['英语新闻', '亚太专题', '直播制作'] },
+];
+
+// ---------------------------------------------------------------------------
+// 7. AI Media Data Centers – replaces generic AI data centers in media variant.
 // ---------------------------------------------------------------------------
 export const MEDIA_AI_DATA_CENTERS: AIDataCenter[] = [
   { id: 'madc_beijing', name: '央视云媒智算中心', owner: 'China Media Group', country: 'China', lat: 39.92, lon: 116.45, status: 'existing', chipType: 'H100 / Ascend', chipCount: 28000, powerMW: 48, sector: 'Media AI', note: '支持新闻剪辑、AIGC 审核、智能分发和多模态新闻生产。' },
@@ -450,7 +515,7 @@ export const MEDIA_AI_DATA_CENTERS: AIDataCenter[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 6. Government News Notices – replaces GCC investment markers in media variant.
+// 8. Government News Notices – replaces GCC investment markers in media variant.
 // ---------------------------------------------------------------------------
 export const MEDIA_GOVERNMENT_NOTICES: GulfInvestment[] = [
   {
@@ -537,5 +602,158 @@ export const MEDIA_GOVERNMENT_NOTICES: GulfInvestment[] = [
     description: '面向跨境平台治理、信息传播规范和国际媒体合作的政策通告节点。',
     sourceUrl: 'https://www.mci.gov.sg',
     tags: ['监管', '跨境平台'],
+  },
+  {
+    id: 'mgn_beijing_cac',
+    investingEntity: 'Other',
+    investingCountry: 'SA',
+    targetCountry: '中国',
+    targetCountryIso: 'CN',
+    sector: 'telecoms',
+    assetType: '监管通报',
+    assetName: '国家网信办通告',
+    lat: 39.9152, lon: 116.4039,
+    investmentUSD: 26000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '聚焦平台治理、算法备案、内容审核与数据安全的重要监管通告。',
+    sourceUrl: 'https://www.cac.gov.cn',
+    tags: ['网信办', '平台治理'],
+  },
+  {
+    id: 'mgn_beijing_nrta',
+    investingEntity: 'Other',
+    investingCountry: 'SA',
+    targetCountry: '中国',
+    targetCountryIso: 'CN',
+    sector: 'telecoms',
+    assetType: '部委公告',
+    assetName: '国家广播电视总局公告',
+    lat: 39.9322, lon: 116.3271,
+    investmentUSD: 25000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '涉及影视、综艺、网络视听、播出规范和行业准入的核心政策口径。',
+    sourceUrl: 'http://www.nrta.gov.cn',
+    tags: ['广电总局', '网络视听'],
+  },
+  {
+    id: 'mgn_beijing_mct',
+    investingEntity: 'Other',
+    investingCountry: 'SA',
+    targetCountry: '中国',
+    targetCountryIso: 'CN',
+    sector: 'telecoms',
+    assetType: '政策发布',
+    assetName: '文化和旅游部新闻通告',
+    lat: 39.9123, lon: 116.3857,
+    investmentUSD: 18000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '覆盖演出、文旅活动、文化产业扶持和内容出海相关政策。',
+    sourceUrl: 'https://www.mct.gov.cn',
+    tags: ['文旅部', '文化产业'],
+  },
+  {
+    id: 'mgn_beijing_mfa',
+    investingEntity: 'Other',
+    investingCountry: 'SA',
+    targetCountry: '中国',
+    targetCountryIso: 'CN',
+    sector: 'telecoms',
+    assetType: '例行记者会',
+    assetName: '外交部例行记者会',
+    lat: 39.9154, lon: 116.4211,
+    investmentUSD: 21000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '国际传播、涉外舆情和海外媒体关注议题的重要口径来源。',
+    sourceUrl: 'https://www.fmprc.gov.cn',
+    tags: ['外交部', '国际传播'],
+  },
+  {
+    id: 'mgn_shanghai_info',
+    investingEntity: 'Other',
+    investingCountry: 'UAE',
+    targetCountry: '中国',
+    targetCountryIso: 'CN',
+    sector: 'telecoms',
+    assetType: '地方发布',
+    assetName: '上海市政府新闻发布会',
+    lat: 31.2306, lon: 121.4733,
+    investmentUSD: 15000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '城市治理、营商环境、文化活动与大型会展的高频发布窗口。',
+    sourceUrl: 'https://www.shanghai.gov.cn',
+    tags: ['上海发布', '地方通告'],
+  },
+  {
+    id: 'mgn_guangzhou_info',
+    investingEntity: 'Other',
+    investingCountry: 'UAE',
+    targetCountry: '中国',
+    targetCountryIso: 'CN',
+    sector: 'telecoms',
+    assetType: '地方发布',
+    assetName: '广东省新闻发布会',
+    lat: 23.1294, lon: 113.2647,
+    investmentUSD: 14000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '粤港澳大湾区产业政策、文化活动和区域传播议题的重要发布来源。',
+    sourceUrl: 'https://www.gd.gov.cn',
+    tags: ['广东发布', '湾区'],
+  },
+  {
+    id: 'mgn_tokyo_cabinet',
+    investingEntity: 'Other',
+    investingCountry: 'UAE',
+    targetCountry: 'Japan',
+    targetCountryIso: 'JP',
+    sector: 'telecoms',
+    assetType: '政府发布',
+    assetName: '日本内阁官房新闻通告',
+    lat: 35.6896, lon: 139.6918,
+    investmentUSD: 16000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '日本政府对传媒政策、平台治理和文化内容出口的官方通告来源。',
+    sourceUrl: 'https://www.cas.go.jp',
+    tags: ['日本内阁', '政策发布'],
+  },
+  {
+    id: 'mgn_seoul_kcc',
+    investingEntity: 'Other',
+    investingCountry: 'UAE',
+    targetCountry: 'South Korea',
+    targetCountryIso: 'KR',
+    sector: 'telecoms',
+    assetType: '监管发布',
+    assetName: '韩国通信委员会通报',
+    lat: 37.5660, lon: 126.9786,
+    investmentUSD: 15000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '面向平台治理、内容审查和通信监管的重要官方来源。',
+    sourceUrl: 'https://www.kcc.go.kr',
+    tags: ['KCC', '平台监管'],
+  },
+  {
+    id: 'mgn_brussels_parliament',
+    investingEntity: 'Other',
+    investingCountry: 'UAE',
+    targetCountry: 'Belgium',
+    targetCountryIso: 'BE',
+    sector: 'telecoms',
+    assetType: '立法通告',
+    assetName: '欧洲议会数字政策通告',
+    lat: 50.8412, lon: 4.3750,
+    investmentUSD: 17000,
+    status: 'operational',
+    yearAnnounced: 2026,
+    description: '围绕平台责任、AI 内容治理与版权规则的欧洲立法动态。',
+    sourceUrl: 'https://www.europarl.europa.eu',
+    tags: ['欧洲议会', '数字政策'],
   },
 ];
