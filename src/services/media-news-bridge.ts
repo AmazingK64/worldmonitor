@@ -7,6 +7,8 @@ let interpretedKeys = new Set<string>();
 const interpretedListeners = new Set<(keys: Set<string>) => void>();
 let interpretedMeta = new Map<string, number>();
 const interpretedMetaListeners = new Set<(meta: Map<string, number>) => void>();
+let interpretedSummaries = new Map<string, string>();
+const interpretedSummaryListeners = new Set<(summaries: Map<string, string>) => void>();
 
 function itemKey(item: Pick<NewsItem, 'source' | 'title'>): string {
   return `${item.source}::${item.title}`;
@@ -18,6 +20,9 @@ export function setMediaBridgeItems(items: NewsItem[]): void {
   interpretedKeys = new Set([...interpretedKeys].filter((key) => allowedKeys.has(key)));
   interpretedMeta = new Map(
     [...interpretedMeta.entries()].filter(([key]) => allowedKeys.has(key)),
+  );
+  interpretedSummaries = new Map(
+    [...interpretedSummaries.entries()].filter(([key]) => allowedKeys.has(key)),
   );
   tavilyItems = [...interpretedKeys]
     .map((key) => candidateItems.get(key))
@@ -31,6 +36,9 @@ export function setMediaBridgeItems(items: NewsItem[]): void {
   }
   for (const listener of interpretedMetaListeners) {
     listener(new Map(interpretedMeta));
+  }
+  for (const listener of interpretedSummaryListeners) {
+    listener(new Map(interpretedSummaries));
   }
 }
 
@@ -46,12 +54,13 @@ export function subscribeMediaBridgeItems(listener: (items: NewsItem[]) => void)
   };
 }
 
-export function markMediaBridgeInterpreted(item: Pick<NewsItem, 'source' | 'title'>): void {
+export function markMediaBridgeInterpreted(item: Pick<NewsItem, 'source' | 'title'>, summary?: string): void {
   const key = itemKey(item);
   const candidate = candidateItems.get(key);
   if (!candidate) return;
   interpretedKeys.add(key);
   interpretedMeta.set(key, Date.now());
+  if (summary && summary.trim()) interpretedSummaries.set(key, summary.trim());
   tavilyItems = [...interpretedKeys]
     .map((currentKey) => candidateItems.get(currentKey))
     .filter((currentItem): currentItem is NewsItem => Boolean(currentItem))
@@ -64,6 +73,9 @@ export function markMediaBridgeInterpreted(item: Pick<NewsItem, 'source' | 'titl
   }
   for (const listener of interpretedMetaListeners) {
     listener(new Map(interpretedMeta));
+  }
+  for (const listener of interpretedSummaryListeners) {
+    listener(new Map(interpretedSummaries));
   }
 }
 
@@ -88,5 +100,17 @@ export function subscribeMediaBridgeInterpretationMeta(listener: (meta: Map<stri
   listener(new Map(interpretedMeta));
   return () => {
     interpretedMetaListeners.delete(listener);
+  };
+}
+
+export function getMediaBridgeInterpretedSummaries(): Map<string, string> {
+  return new Map(interpretedSummaries);
+}
+
+export function subscribeMediaBridgeInterpretationSummaries(listener: (summaries: Map<string, string>) => void): () => void {
+  interpretedSummaryListeners.add(listener);
+  listener(new Map(interpretedSummaries));
+  return () => {
+    interpretedSummaryListeners.delete(listener);
   };
 }

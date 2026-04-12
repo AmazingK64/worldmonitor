@@ -6,8 +6,10 @@ import {
   getMediaBridgeItems,
   getMediaBridgeInterpretedKeys,
   getMediaBridgeInterpretedMeta,
+  getMediaBridgeInterpretedSummaries,
   subscribeMediaBridgeInterpretation,
   subscribeMediaBridgeInterpretationMeta,
+  subscribeMediaBridgeInterpretationSummaries,
   subscribeMediaBridgeItems,
 } from '@/services/media-news-bridge';
 import type { NewsItem } from '@/types';
@@ -50,10 +52,12 @@ export class MediaStorylinePanel extends Panel {
   private bridgeItems: NewsItem[] = getMediaBridgeItems();
   private interpretedKeys = getMediaBridgeInterpretedKeys();
   private interpretedMeta = getMediaBridgeInterpretedMeta();
+  private interpretedSummaries = getMediaBridgeInterpretedSummaries();
   private modal = new MediaDetailModal();
   private unsubscribeBridge: (() => void) | null = null;
   private unsubscribeInterpretation: (() => void) | null = null;
   private unsubscribeInterpretationMeta: (() => void) | null = null;
+  private unsubscribeInterpretationSummaries: (() => void) | null = null;
 
   constructor() {
     super({
@@ -95,6 +99,10 @@ export class MediaStorylinePanel extends Panel {
     });
     this.unsubscribeInterpretationMeta = subscribeMediaBridgeInterpretationMeta((meta) => {
       this.interpretedMeta = meta;
+      this.renderPanel();
+    });
+    this.unsubscribeInterpretationSummaries = subscribeMediaBridgeInterpretationSummaries((summaries) => {
+      this.interpretedSummaries = summaries;
       this.renderPanel();
     });
     this.renderPanel();
@@ -193,7 +201,7 @@ export class MediaStorylinePanel extends Panel {
     return TOPIC_BUCKETS
       .map((bucket) => ({
         name: t(bucket.label),
-        relatedItems: items.filter((item) => bucket.patterns.some((pattern) => pattern.test(item.title))).slice(0, 6),
+        relatedItems: items.filter((item) => bucket.patterns.some((pattern) => pattern.test(this.getMatchingText(item)))).slice(0, 6),
       }))
       .map((bucket) => ({
         ...bucket,
@@ -391,7 +399,9 @@ export class MediaStorylinePanel extends Panel {
   }
 
   private shareTopicBucket(base: NewsItem, candidate: NewsItem): boolean {
-    return TOPIC_BUCKETS.some((bucket) => bucket.patterns.some((pattern) => pattern.test(base.title)) && bucket.patterns.some((pattern) => pattern.test(candidate.title)));
+    const baseText = this.getMatchingText(base);
+    const candidateText = this.getMatchingText(candidate);
+    return TOPIC_BUCKETS.some((bucket) => bucket.patterns.some((pattern) => pattern.test(baseText)) && bucket.patterns.some((pattern) => pattern.test(candidateText)));
   }
 
   private buildFollowUpSummary(item: NewsItem, relatedItems: NewsItem[]): string {
@@ -427,6 +437,8 @@ export class MediaStorylinePanel extends Panel {
     this.unsubscribeInterpretation = null;
     this.unsubscribeInterpretationMeta?.();
     this.unsubscribeInterpretationMeta = null;
+    this.unsubscribeInterpretationSummaries?.();
+    this.unsubscribeInterpretationSummaries = null;
     super.destroy();
   }
 
@@ -465,6 +477,11 @@ export class MediaStorylinePanel extends Panel {
         }
       </style>
     `;
+  }
+
+  private getMatchingText(item: NewsItem): string {
+    const summary = this.interpretedSummaries.get(`${item.source}::${item.title}`) || '';
+    return `${item.title} ${summary}`;
   }
 
   private renderMetric(metric: 'topics' | 'alerts' | 'sources', label: string, value: string, hint: string): string {

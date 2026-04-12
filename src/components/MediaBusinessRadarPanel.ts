@@ -6,8 +6,10 @@ import {
   getMediaBridgeItems,
   getMediaBridgeInterpretedKeys,
   getMediaBridgeInterpretedMeta,
+  getMediaBridgeInterpretedSummaries,
   subscribeMediaBridgeInterpretation,
   subscribeMediaBridgeInterpretationMeta,
+  subscribeMediaBridgeInterpretationSummaries,
   subscribeMediaBridgeItems,
 } from '@/services/media-news-bridge';
 import type { NewsItem } from '@/types';
@@ -47,10 +49,12 @@ export class MediaBusinessRadarPanel extends Panel {
   private bridgeItems: NewsItem[] = getMediaBridgeItems();
   private interpretedKeys = getMediaBridgeInterpretedKeys();
   private interpretedMeta = getMediaBridgeInterpretedMeta();
+  private interpretedSummaries = getMediaBridgeInterpretedSummaries();
   private modal = new MediaDetailModal();
   private unsubscribeBridge: (() => void) | null = null;
   private unsubscribeInterpretation: (() => void) | null = null;
   private unsubscribeInterpretationMeta: (() => void) | null = null;
+  private unsubscribeInterpretationSummaries: (() => void) | null = null;
 
   constructor() {
     super({
@@ -87,6 +91,10 @@ export class MediaBusinessRadarPanel extends Panel {
       this.interpretedMeta = meta;
       this.renderPanel();
     });
+    this.unsubscribeInterpretationSummaries = subscribeMediaBridgeInterpretationSummaries((summaries) => {
+      this.interpretedSummaries = summaries;
+      this.renderPanel();
+    });
     this.renderPanel();
   }
 
@@ -103,7 +111,7 @@ export class MediaBusinessRadarPanel extends Panel {
       .map((bucket) => ({
         name: t(bucket.labelKey),
         hint: t(bucket.hintKey),
-        relatedItems: mergedItems.filter((item) => bucket.patterns.some((pattern) => pattern.test(item.title))).slice(0, 6),
+        relatedItems: mergedItems.filter((item) => bucket.patterns.some((pattern) => pattern.test(this.getMatchingText(item)))).slice(0, 6),
       }))
       .map((bucket) => ({ ...bucket, count: bucket.relatedItems.length }))
       .sort((a, b) => b.count - a.count);
@@ -198,7 +206,7 @@ export class MediaBusinessRadarPanel extends Panel {
       .map((bucket) => ({
         name: t(bucket.labelKey),
         hint: t(bucket.hintKey),
-        relatedItems: mergedItems.filter((item) => bucket.patterns.some((pattern) => pattern.test(item.title))).slice(0, 6),
+        relatedItems: mergedItems.filter((item) => bucket.patterns.some((pattern) => pattern.test(this.getMatchingText(item)))).slice(0, 6),
       }))
       .map((bucket) => ({ ...bucket, count: bucket.relatedItems.length }))
       .sort((a, b) => b.count - a.count);
@@ -386,6 +394,8 @@ export class MediaBusinessRadarPanel extends Panel {
     this.unsubscribeInterpretation = null;
     this.unsubscribeInterpretationMeta?.();
     this.unsubscribeInterpretationMeta = null;
+    this.unsubscribeInterpretationSummaries?.();
+    this.unsubscribeInterpretationSummaries = null;
     super.destroy();
   }
 
@@ -428,5 +438,10 @@ export class MediaBusinessRadarPanel extends Panel {
         }
       </style>
     `;
+  }
+
+  private getMatchingText(item: NewsItem): string {
+    const summary = this.interpretedSummaries.get(`${item.source}::${item.title}`) || '';
+    return `${item.title} ${summary}`;
   }
 }

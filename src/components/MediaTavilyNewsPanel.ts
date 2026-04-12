@@ -117,6 +117,7 @@ export class MediaTavilyNewsPanel extends Panel {
       .slice(0, 5);
 
     if (this.expanded.has(cacheKey)) {
+      markMediaBridgeInterpreted({ source: item.source, title: item.title }, this.expanded.get(cacheKey) || '');
       this.openDetailModal(item, this.expanded.get(cacheKey) || '', relatedItems);
       return;
     }
@@ -131,7 +132,7 @@ export class MediaTavilyNewsPanel extends Panel {
       const result = await summarizeMediaNewsItem(item);
       const summary = result || '当前无法生成 AI 解读。';
       this.expanded.set(cacheKey, summary);
-      markMediaBridgeInterpreted({ source: item.source, title: item.title });
+      markMediaBridgeInterpreted({ source: item.source, title: item.title }, summary);
       this.openDetailModal(item, summary, relatedItems);
     } catch {
       this.openDetailModal(item, '当前无法生成 AI 解读。', relatedItems);
