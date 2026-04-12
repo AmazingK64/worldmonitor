@@ -7,9 +7,11 @@ import {
   getMediaBridgeInterpretedKeys,
   getMediaBridgeInterpretedMeta,
   getMediaBridgeInterpretedSummaries,
+  getMediaBridgeInterpretedTopicTags,
   subscribeMediaBridgeInterpretation,
   subscribeMediaBridgeInterpretationMeta,
   subscribeMediaBridgeInterpretationSummaries,
+  subscribeMediaBridgeInterpretationTopicTags,
   subscribeMediaBridgeItems,
 } from '@/services/media-news-bridge';
 import type { NewsItem } from '@/types';
@@ -53,11 +55,13 @@ export class MediaStorylinePanel extends Panel {
   private interpretedKeys = getMediaBridgeInterpretedKeys();
   private interpretedMeta = getMediaBridgeInterpretedMeta();
   private interpretedSummaries = getMediaBridgeInterpretedSummaries();
+  private interpretedTopicTags = getMediaBridgeInterpretedTopicTags();
   private modal = new MediaDetailModal();
   private unsubscribeBridge: (() => void) | null = null;
   private unsubscribeInterpretation: (() => void) | null = null;
   private unsubscribeInterpretationMeta: (() => void) | null = null;
   private unsubscribeInterpretationSummaries: (() => void) | null = null;
+  private unsubscribeInterpretationTopicTags: (() => void) | null = null;
 
   constructor() {
     super({
@@ -103,6 +107,10 @@ export class MediaStorylinePanel extends Panel {
     });
     this.unsubscribeInterpretationSummaries = subscribeMediaBridgeInterpretationSummaries((summaries) => {
       this.interpretedSummaries = summaries;
+      this.renderPanel();
+    });
+    this.unsubscribeInterpretationTopicTags = subscribeMediaBridgeInterpretationTopicTags((topicTags) => {
+      this.interpretedTopicTags = topicTags;
       this.renderPanel();
     });
     this.renderPanel();
@@ -439,6 +447,8 @@ export class MediaStorylinePanel extends Panel {
     this.unsubscribeInterpretationMeta = null;
     this.unsubscribeInterpretationSummaries?.();
     this.unsubscribeInterpretationSummaries = null;
+    this.unsubscribeInterpretationTopicTags?.();
+    this.unsubscribeInterpretationTopicTags = null;
     super.destroy();
   }
 
@@ -480,8 +490,10 @@ export class MediaStorylinePanel extends Panel {
   }
 
   private getMatchingText(item: NewsItem): string {
-    const summary = this.interpretedSummaries.get(`${item.source}::${item.title}`) || '';
-    return `${item.title} ${summary}`;
+    const key = `${item.source}::${item.title}`;
+    const summary = this.interpretedSummaries.get(key) || '';
+    const topicTags = this.interpretedTopicTags.get(key)?.join(' ') || '';
+    return `${item.title} ${summary} ${topicTags}`;
   }
 
   private renderMetric(metric: 'topics' | 'alerts' | 'sources', label: string, value: string, hint: string): string {

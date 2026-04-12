@@ -117,8 +117,10 @@ export class MediaTavilyNewsPanel extends Panel {
       .slice(0, 5);
 
     if (this.expanded.has(cacheKey)) {
-      markMediaBridgeInterpreted({ source: item.source, title: item.title }, this.expanded.get(cacheKey) || '');
-      this.openDetailModal(item, this.expanded.get(cacheKey) || '', relatedItems);
+      const summary = this.expanded.get(cacheKey) || '';
+      const topicTags = this.buildStructuredTopicTags(item, summary);
+      markMediaBridgeInterpreted({ source: item.source, title: item.title }, summary, topicTags);
+      this.openDetailModal(item, summary, relatedItems, topicTags);
       return;
     }
 
@@ -131,9 +133,10 @@ export class MediaTavilyNewsPanel extends Panel {
     try {
       const result = await summarizeMediaNewsItem(item);
       const summary = result || '当前无法生成 AI 解读。';
+      const topicTags = this.buildStructuredTopicTags(item, summary);
       this.expanded.set(cacheKey, summary);
-      markMediaBridgeInterpreted({ source: item.source, title: item.title }, summary);
-      this.openDetailModal(item, summary, relatedItems);
+      markMediaBridgeInterpreted({ source: item.source, title: item.title }, summary, topicTags);
+      this.openDetailModal(item, summary, relatedItems, topicTags);
     } catch {
       this.openDetailModal(item, '当前无法生成 AI 解读。', relatedItems);
     } finally {
@@ -153,6 +156,7 @@ export class MediaTavilyNewsPanel extends Panel {
       : interpreted
         ? `border:1px solid rgba(16,185,129,0.4);background:linear-gradient(135deg, rgba(16,185,129,0.18), rgba(56,189,248,0.14));color:#d1fae5;${fresh ? 'animation:media-ai-sync-pulse 1.4s ease-in-out 3;' : ''}`
         : 'border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:var(--text);';
+    const tags = interpreted ? this.buildStructuredTopicTags(item, this.expanded.get(item.url || item.title) || '') : [];
     return `
       <article style="padding:10px 12px;border:1px solid ${interpreted ? 'rgba(16,185,129,0.2)' : 'var(--border)'};border-radius:12px;background:${interpreted ? 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(56,189,248,0.06))' : 'rgba(255,255,255,0.03)'};box-shadow:${interpreted ? '0 10px 24px rgba(16,185,129,0.06)' : 'none'};${fresh ? 'animation:media-ai-card-pulse 1.5s ease-in-out 3;' : ''}">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
@@ -163,6 +167,7 @@ export class MediaTavilyNewsPanel extends Panel {
         </div>
         <div style="margin-top:4px;font-size:10px;color:var(--text-dim)">${escapeHtml(item.source)} · ${escapeHtml(relativeTime(item.publishedAt))}${interpreted ? '<span style="margin-left:8px;color:#86efac;font-weight:700">已同步到选题 / 雷达</span>' : ''}</div>
         ${item.summary ? `<div style="margin-top:8px;font-size:11px;color:var(--text-dim);line-height:1.5">${escapeHtml(item.summary.slice(0, 180))}</div>` : ''}
+        ${tags.length > 0 ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">${tags.map((tag) => `<span style="padding:2px 8px;border-radius:999px;background:rgba(16,185,129,0.14);color:#bbf7d0;font-size:10px;font-weight:700">${escapeHtml(tag)}</span>`).join('')}</div>` : ''}
       </article>
     `;
   }
@@ -200,11 +205,11 @@ export class MediaTavilyNewsPanel extends Panel {
     });
   }
 
-  private openDetailModal(item: MediaTavilyNewsItem, summary: string, relatedItems: MediaTavilyNewsItem[]): void {
+  private openDetailModal(item: MediaTavilyNewsItem, summary: string, relatedItems: MediaTavilyNewsItem[], topicTags: string[] = []): void {
     this.modal.show({
       title: item.title,
       subtitle: `${item.source} · ${relativeTime(item.publishedAt)}。该新闻已同步纳入监测主题与选题指挥版。`,
-      tags: ['Tavily 媒体新闻', item.source, '已转化'],
+      tags: ['Tavily 媒体新闻', item.source, '已转化', ...topicTags],
       sections: [
         {
           title: '基础内容',
@@ -212,7 +217,9 @@ export class MediaTavilyNewsPanel extends Panel {
         },
         {
           title: '转化结果',
-          content: '该新闻已作为传媒信号并入监测主题、选题指挥板和经营雷达，可继续从平台分发、AI版权、创作者生态、品牌舆情等方向拆解。',
+          content: topicTags.length > 0
+            ? `该新闻已作为传媒信号并入监测主题、选题指挥板和经营雷达，并强制生成结构化选题标签：${topicTags.join('、')}。`
+            : '该新闻已作为传媒信号并入监测主题、选题指挥板和经营雷达，可继续从平台分发、AI版权、创作者生态、品牌舆情等方向拆解。',
         },
       ],
       links: [
@@ -230,6 +237,39 @@ export class MediaTavilyNewsPanel extends Panel {
       analysisTitle: 'AI 解读',
       analysisPromise: Promise.resolve(summary),
     });
+  }
+
+  private buildStructuredTopicTags(item: MediaTavilyNewsItem, summary: string): string[] {
+    const text = `${item.title} ${item.summary || ''} ${summary}`.toLowerCase();
+    const matched: string[] = [];
+    const tagRules: Array<{ tag: string; patterns: RegExp[] }> = [
+      { tag: '平台分发策略', patterns: [/platform/, /algorithm/, /distribution/, /recommend/, /youtube/, /tiktok/, /抖音/, /快手/, /平台/, /分发/, /推荐/, /流量/] },
+      { tag: 'AI版权与合规', patterns: [/ai\b/, /model/, /aigc/, /copyright/, /licensing/, /synthetic/, /人工智能/, /大模型/, /版权/, /合规/, /训练数据/] },
+      { tag: '创作者生态变化', patterns: [/creator/, /influencer/, /audience/, /subscriber/, /community/, /创作者/, /达人/, /博主/, /粉丝/, /用户生态/] },
+      { tag: '品牌投放与广告预算', patterns: [/advertis/, /brand/, /campaign/, /marketing/, /sponsor/, /广告/, /品牌/, /投放/, /营销/, /预算/] },
+      { tag: '监管政策与平台治理', patterns: [/regulation/, /policy/, /law/, /compliance/, /governance/, /监管/, /政策/, /法规/, /治理/] },
+      { tag: '文娱热点与内容出海', patterns: [/entertainment/, /celebrity/, /drama/, /film/, /movie/, /music/, /gaming/, /文娱/, /影视/, /综艺/, /音乐/, /游戏/, /出海/] },
+      { tag: '长视频与流媒体竞争', patterns: [/streaming/, /netflix/, /disney/, /long-form/, /ott/, /流媒体/, /长视频/, /会员视频/] },
+      { tag: '短视频与社交平台', patterns: [/short video/, /social media/, /reels/, /shorts/, /短视频/, /社交平台/, /小红书/, /微博/] },
+      { tag: '国际传播与政府发布', patterns: [/government/, /state media/, /public notice/, /press conference/, /新华社/, /人民日报/, /政府发布/, /新闻发布会/, /国际传播/] },
+    ];
+
+    for (const rule of tagRules) {
+      if (rule.patterns.some((pattern) => pattern.test(text))) matched.push(rule.tag);
+      if (matched.length >= 2) break;
+    }
+
+    if (matched.length === 0) {
+      if (/risk|lawsuit|ban|crisis|危机|诉讼|封禁|争议/.test(text)) matched.push('监管政策与平台治理');
+      else matched.push('平台分发策略');
+    }
+
+    if (matched.length === 1) {
+      const fallback = matched[0] === '平台分发策略' ? '创作者生态变化' : '平台分发策略';
+      if (!matched.includes(fallback)) matched.push(fallback);
+    }
+
+    return matched.slice(0, 2);
   }
 
   private shareTopic(base: MediaTavilyNewsItem, candidate: MediaTavilyNewsItem): boolean {

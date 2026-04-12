@@ -9,6 +9,8 @@ let interpretedMeta = new Map<string, number>();
 const interpretedMetaListeners = new Set<(meta: Map<string, number>) => void>();
 let interpretedSummaries = new Map<string, string>();
 const interpretedSummaryListeners = new Set<(summaries: Map<string, string>) => void>();
+let interpretedTopicTags = new Map<string, string[]>();
+const interpretedTopicTagListeners = new Set<(topicTags: Map<string, string[]>) => void>();
 
 function itemKey(item: Pick<NewsItem, 'source' | 'title'>): string {
   return `${item.source}::${item.title}`;
@@ -23,6 +25,9 @@ export function setMediaBridgeItems(items: NewsItem[]): void {
   );
   interpretedSummaries = new Map(
     [...interpretedSummaries.entries()].filter(([key]) => allowedKeys.has(key)),
+  );
+  interpretedTopicTags = new Map(
+    [...interpretedTopicTags.entries()].filter(([key]) => allowedKeys.has(key)),
   );
   tavilyItems = [...interpretedKeys]
     .map((key) => candidateItems.get(key))
@@ -40,6 +45,9 @@ export function setMediaBridgeItems(items: NewsItem[]): void {
   for (const listener of interpretedSummaryListeners) {
     listener(new Map(interpretedSummaries));
   }
+  for (const listener of interpretedTopicTagListeners) {
+    listener(new Map(interpretedTopicTags));
+  }
 }
 
 export function getMediaBridgeItems(): NewsItem[] {
@@ -54,13 +62,18 @@ export function subscribeMediaBridgeItems(listener: (items: NewsItem[]) => void)
   };
 }
 
-export function markMediaBridgeInterpreted(item: Pick<NewsItem, 'source' | 'title'>, summary?: string): void {
+export function markMediaBridgeInterpreted(
+  item: Pick<NewsItem, 'source' | 'title'>,
+  summary?: string,
+  topicTags?: string[],
+): void {
   const key = itemKey(item);
   const candidate = candidateItems.get(key);
   if (!candidate) return;
   interpretedKeys.add(key);
   interpretedMeta.set(key, Date.now());
   if (summary && summary.trim()) interpretedSummaries.set(key, summary.trim());
+  if (topicTags && topicTags.length > 0) interpretedTopicTags.set(key, [...topicTags]);
   tavilyItems = [...interpretedKeys]
     .map((currentKey) => candidateItems.get(currentKey))
     .filter((currentItem): currentItem is NewsItem => Boolean(currentItem))
@@ -76,6 +89,9 @@ export function markMediaBridgeInterpreted(item: Pick<NewsItem, 'source' | 'titl
   }
   for (const listener of interpretedSummaryListeners) {
     listener(new Map(interpretedSummaries));
+  }
+  for (const listener of interpretedTopicTagListeners) {
+    listener(new Map(interpretedTopicTags));
   }
 }
 
@@ -112,5 +128,19 @@ export function subscribeMediaBridgeInterpretationSummaries(listener: (summaries
   listener(new Map(interpretedSummaries));
   return () => {
     interpretedSummaryListeners.delete(listener);
+  };
+}
+
+export function getMediaBridgeInterpretedTopicTags(): Map<string, string[]> {
+  return new Map(interpretedTopicTags);
+}
+
+export function subscribeMediaBridgeInterpretationTopicTags(
+  listener: (topicTags: Map<string, string[]>) => void,
+): () => void {
+  interpretedTopicTagListeners.add(listener);
+  listener(new Map(interpretedTopicTags));
+  return () => {
+    interpretedTopicTagListeners.delete(listener);
   };
 }
