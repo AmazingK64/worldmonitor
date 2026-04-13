@@ -225,6 +225,7 @@ export class MediaBusinessRadarPanel extends Panel {
       .slice(0, 8);
 
     if (metric === 'signals') {
+      const signalLinks = this.deduplicateNewsItems(topSignals.flatMap((item) => item.relatedItems)).slice(0, 8);
       this.modal.show({
         title: t('components.mediaBusinessRadar.metricSignals'),
         subtitle: `当前共识别 ${topSignals.length} 个监测主题，可用于判断业务关注重心。`,
@@ -236,12 +237,12 @@ export class MediaBusinessRadarPanel extends Panel {
               ? topSignals.map((item, index) => `${index + 1}. ${item.name}（${item.count} 条）`).join('；')
               : '当前暂无监测主题。',
           },
-          {
-            title: '观察建议',
-            content: '优先看平台分发、AI 版权、品牌预算和监管表态是否共同变化，这些更容易带来业务动作。',
-          },
+        {
+          title: '观察建议',
+          content: '优先看平台分发、AI 版权、品牌预算和监管表态是否共同变化，这些更容易带来业务动作。',
+        },
         ],
-        links: topSignals.flatMap((item) => item.relatedItems.slice(0, 2)).slice(0, 8).map((item) => ({
+        links: signalLinks.map((item) => ({
           label: item.title,
           href: item.link,
           meta: item.source,
@@ -249,7 +250,7 @@ export class MediaBusinessRadarPanel extends Panel {
         analysisTitle: 'AI 分析监测主题',
         analysisPromise: generateMediaTopicAnalysis(
           '监测主题',
-          topSignals.flatMap((item) => item.relatedItems).slice(0, 8).map((item) => ({ title: item.title, source: item.source })),
+          signalLinks.map((item) => ({ title: item.title, source: item.source })),
           'signal',
         ),
       });
@@ -257,6 +258,7 @@ export class MediaBusinessRadarPanel extends Panel {
     }
 
     if (metric === 'opportunities') {
+      const opportunityLinks = this.deduplicateNewsItems(opportunityItems.flatMap((item) => item.relatedItems)).slice(0, 8);
       this.modal.show({
         title: t('components.mediaBusinessRadar.metricOpportunities'),
         subtitle: `当前共形成 ${opportunityItems.length} 个机会主题，适合做连续策划和经营判断。`,
@@ -268,12 +270,12 @@ export class MediaBusinessRadarPanel extends Panel {
               ? opportunityItems.map((item, index) => `${index + 1}. ${item.name}（${item.count} 条）`).join('；')
               : '当前暂无成型的机会主题。',
           },
-          {
-            title: 'AI 分析建议',
-            content: '优先筛选可同时支撑流量、品牌合作和长期栏目策划的主题，避免只做一次性热点消耗。',
-          },
+        {
+          title: 'AI 分析建议',
+          content: '优先筛选可同时支撑流量、品牌合作和长期栏目策划的主题，避免只做一次性热点消耗。',
+        },
         ],
-        links: opportunityItems.flatMap((item) => item.relatedItems.slice(0, 2)).slice(0, 8).map((item) => ({
+        links: opportunityLinks.map((item) => ({
           label: item.title,
           href: item.link,
           meta: item.source,
@@ -281,7 +283,7 @@ export class MediaBusinessRadarPanel extends Panel {
         analysisTitle: 'AI 分析机会主题',
         analysisPromise: generateMediaTopicAnalysis(
           '机会主题',
-          opportunityItems.flatMap((item) => item.relatedItems).slice(0, 8).map((item) => ({ title: item.title, source: item.source })),
+          opportunityLinks.map((item) => ({ title: item.title, source: item.source })),
           'opportunity',
         ),
       });
@@ -393,6 +395,16 @@ export class MediaBusinessRadarPanel extends Panel {
       })
       .sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime())
       .slice(0, 220);
+  }
+
+  private deduplicateNewsItems(items: NewsItem[]): NewsItem[] {
+    const seen = new Set<string>();
+    return items.filter((item) => {
+      const key = `${item.source}::${item.title}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   public override destroy(): void {
